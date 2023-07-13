@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import Button from 'react-bootstrap/Button';
+import Button from "react-bootstrap/Button";
 
 const Tracks = () => {
   const [tracks, setTracks] = useState([]);
@@ -45,21 +45,17 @@ const Tracks = () => {
               <span key={index}>{time.Date}&nbsp;</span>
             ))}
           </p>
-          <button
-            className="delete"
+          <Button
+            variant="primary"
             onClick={() => handleDelete(track.Track_ID)}
           >
-            Delete
-          </button>
-          <button>
-            <Link to={`/Track/${track.Track_ID}`}>查看股價走勢</Link>
-          </button>
-          <Button variant="primary">Primary</Button>
+            刪除
+          </Button>
+          <Button variant="secondary" as={Link} to={`/Track/${track.Track_ID}`}>
+            查看股價走勢
+          </Button>
         </div>
       ))}
-      {/* <button>
-        <Link to="/AddTrack">Add new track</Link>
-      </button> */}
     </div>
   );
 };

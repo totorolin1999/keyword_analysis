@@ -29,13 +29,14 @@ const Track = () => {
           `http://127.0.0.1:8000/api/track-detail/${trackId}/`
         );
         setTrack(res.data);
+        const timeQuery = res.data.Times[0].Date;
         const categoriesQuery = queryString.stringify(
           { categories: res.data.Industries.map((item) => item.Industry_ID) },
           { arrayFormat: "bracket-separator", arrayFormatSeparator: "|" }
         );
         const fetchStockData = async () => {
           const res = await axios.get(
-            `http://127.0.0.1:8000/api/stock-chart?${categoriesQuery}`
+            `http://127.0.0.1:8000/api/stock-chart?time=${timeQuery}&${categoriesQuery}`
           );
           setStockData({
             labels: res.data[0].date,

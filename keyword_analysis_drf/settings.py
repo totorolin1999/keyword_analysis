@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''
+SECRET_KEY = 'django-insecure-5jl@83-g6yx)n*&#ys@m#d0g5&u6^)=@6d1m&4p^=kosuq_ytw'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -83,9 +83,9 @@ WSGI_APPLICATION = 'keyword_analysis_drf.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': '',
-        'USER':'',
-        'PASSWORD':'',
+        'NAME': 'keyworddb',
+        'USER':'totoro',
+        'PASSWORD':'totoro',
         'HOST':'localhost\SQLEXPRESS',
         'OPTIONS':{
             'driver':'ODBC Driver 17 for SQL Server',

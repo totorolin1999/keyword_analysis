@@ -30,7 +30,7 @@ const TrackChart = ({ chartData, trackData }) => {
       },
       title: {
         display: true,
-        text: "前兩周至今的股價走勢(X軸: 收盤價 NT, Y軸: 日期)",
+        text: "首次追蹤前兩周至今的股價走勢(X軸: 收盤價 NT, Y軸: 日期)",
       },
     },
   };

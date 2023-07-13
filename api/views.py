@@ -178,6 +178,11 @@ def categoryList(request):
 
 @api_view(['GET'])
 def stockChart(request):
+    time = request.query_params.get('time')
+    if time is not None:
+        trackDay = datetime.datetime.strptime(time, '%Y/%m/%d')
+        startDay = trackDay - datetime.timedelta(days=14)
+        delta = datetime.datetime.today() - startDay
     categories = request.query_params.get('categories[]')
     categories = list(map(int, categories.split("|")))
 
@@ -185,10 +190,16 @@ def stockChart(request):
     for category in categories:
         stocks = Stock.objects.filter(Industry_id=category)
         for stock in stocks:
-            df = yf.download(stock.Ticker, period="14d", interval="1d")
-            df = df.reset_index()
-            df['Date'] = df['Date'].dt.strftime('%Y/%m/%d')
-            data.append({"name": stock.Name, "date": df['Date'], "close": df['Close']})
+            if time is None:
+                df = yf.download(stock.Ticker, period="14d", interval="1d")
+                df = df.reset_index()
+                df['Date'] = df['Date'].dt.strftime('%Y/%m/%d')
+                data.append({"name": stock.Name, "date": df['Date'], "close": df['Close']})
+            elif time is not None:
+                df = yf.download(stock.Ticker, period=f"{delta.days}d", interval="1d")
+                df = df.reset_index()
+                df['Date'] = df['Date'].dt.strftime('%Y/%m/%d')
+                data.append({"name": stock.Name, "date": df['Date'], "close": df['Close']})
 
     return Response(data)
 
