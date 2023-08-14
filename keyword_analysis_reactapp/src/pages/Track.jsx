@@ -7,6 +7,8 @@ import { useEffect } from "react";
 import queryString from "query-string";
 import TrackChart from "../components/TrackChart";
 import Button from "react-bootstrap/Button";
+import Alert from "react-bootstrap/Alert";
+import Spinner from "react-bootstrap/Spinner";
 
 const Track = () => {
   const [track, setTrack] = useState({
@@ -16,6 +18,8 @@ const Track = () => {
     Keyword: "",
   });
   const [stockData, setStockData] = useState(null);
+
+  const [show, setShow] = useState(true);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,12 +44,20 @@ const Track = () => {
           );
           setStockData({
             labels: res.data[0].date,
-            datasets: res.data.map((item) => ({
-              label: item.name,
-              data: item.close,
-              borderColor: "rgb(255, 99, 132)",
-              backgroundColor: "rgba(255, 99, 132, 0.5)",
-            })),
+            datasets: res.data.map((item) => {
+              const number1 = Math.floor(Math.random() * 256);
+              const number2 = Math.floor(Math.random() * 256);
+              const number3 = Math.floor(Math.random() * 256);
+              const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
+              const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
+    
+              return {
+                label: item.name,
+                data: item.close,
+                borderColor: randomColor1,
+                backgroundColor: randomColor2,
+              };
+            }),
           });
         };
         fetchStockData();
@@ -77,12 +89,23 @@ const Track = () => {
   //   console.log(track);
   return (
     <>
-      <p>{track.Keyword}</p>
-      <p>
-        {track.Industries.map((industry, index) => (
-          <span key={index}>{industry.Name}&nbsp;</span>
-        ))}
-      </p>
+      <Alert show={show} variant="success">
+        <Alert.Heading>關鍵字：{track.Keyword}</Alert.Heading>
+        <p>
+          產業：
+          {track.Industries.map((industry, index) => (
+            <span key={index}>{industry.Name}&nbsp;</span>
+          ))}
+        </p>
+        <hr />
+        <div className="d-flex justify-content-end">
+          <Button onClick={() => setShow(false)} variant="outline-success">
+            關閉追蹤資訊
+          </Button>
+        </div>
+      </Alert>
+
+      {!show && <Button onClick={() => setShow(true)}>顯示追蹤資訊</Button>}
       <div>
         {stockData ? (
           <>
@@ -92,7 +115,9 @@ const Track = () => {
             </Button>
           </>
         ) : (
-          <div>Loading...</div>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
         )}
       </div>
     </>

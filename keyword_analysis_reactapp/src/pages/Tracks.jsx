@@ -4,6 +4,10 @@ import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import Button from "react-bootstrap/Button";
+import Table from "react-bootstrap/Table";
+import Card from "react-bootstrap/Card";
+import Col from "react-bootstrap/Col";
+import Row from "react-bootstrap/Row";
 
 const Tracks = () => {
   const [tracks, setTracks] = useState([]);
@@ -30,33 +34,43 @@ const Tracks = () => {
   };
 
   return (
-    <div>
-      <h1>Tracks</h1>
-      {tracks.map((track, idx) => (
-        <div key={idx}>
-          <p>{track.Keyword}</p>
-          <p>
-            {track.Industries.map((industry, index) => (
-              <span key={index}>{industry.Name}&nbsp;</span>
-            ))}
-          </p>
-          <p>
-            {track.Times.map((time, index) => (
-              <span key={index}>{time.Date}&nbsp;</span>
-            ))}
-          </p>
-          <Button
-            variant="primary"
-            onClick={() => handleDelete(track.Track_ID)}
-          >
-            刪除
-          </Button>
-          <Button variant="secondary" as={Link} to={`/Track/${track.Track_ID}`}>
-            查看股價走勢
-          </Button>
-        </div>
-      ))}
-    </div>
+    <>
+      <Row xs={1} md={3} className="g-4">
+        {tracks.map((track, idx) => (
+          <Col key={idx}>
+            <Card border="info" bg="Light" text="dark">
+              <Card.Body>
+                <Card.Title>{track.Keyword}</Card.Title>
+                <Card.Text>
+                  {track.Industries.map((industry, index) => (
+                    <span key={index}>{industry.Name}&nbsp;</span>
+                  ))}
+                </Card.Text>
+                <Card.Text>
+                  {track.Times.map((time, index) => (
+                    <span key={index}>{time.Date}&nbsp;</span>
+                  ))}
+                </Card.Text>
+                <Button
+                  variant="primary"
+                  as={Link}
+                  to={`/Track/${track.Track_ID}`}
+                  className="me-2"
+                >
+                  查看股價走勢
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => handleDelete(track.Track_ID)}
+                >
+                  刪除
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </>
   );
 };
 

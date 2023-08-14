@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 
@@ -43,6 +44,7 @@ class Time(models.Model):
 class Track(models.Model):
     Track_ID = models.AutoField(primary_key=True)
     Keyword = models.CharField(max_length=255)
+    User = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     Industries = models.ManyToManyField(Industry, blank=True, null=True)
     Times = models.ManyToManyField(Time, blank=True, null=True)
 

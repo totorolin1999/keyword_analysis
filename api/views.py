@@ -14,7 +14,6 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import datetime
 
-import csv
 import urllib.request as req
 import jieba
 import yfinance as yf
@@ -58,23 +57,9 @@ def keywordList(request):
     df = pd.concat(df, ignore_index=True)
     df['title'] = df['title'].apply(lambda x: x['query'])#讓title只顯示中文
 
-
-    # data = df['title'].head(40)
     keywords = []
     for index, row in df.iterrows():
         keywords.append({"value": row['title'], "label": row['title']})
-        # print(index, row['title'])
-    # list = data.tolist()
-
-    # data.to_csv('keyword.csv',index=False,encoding="utf-8",header=0)
-    # list = []
-    # with open('D:\keywords-app\csv\keyword.csv', 'r', encoding="utf-8") as csv_file:
-    #     csv_reader = csv.reader(csv_file)
-        
-    #     for line in csv_reader:
-    #         list.append(line[0])
-    
-    # return jsonify(list)
 
     return Response(keywords)
 
@@ -129,7 +114,9 @@ def categoryList(request):
                 # dataStr += data
             # url = dataArticles[i][0]["url"]
             break
-    
+    end = time.time()
+    print(format(end-start))
+    start = time.time()
     # data=req.Request(url,headers=header)
 
     # with req.urlopen(data) as response:
