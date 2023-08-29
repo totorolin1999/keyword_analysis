@@ -18,8 +18,10 @@ const Track = () => {
     Keyword: "",
   });
   const [stockData, setStockData] = useState(null);
+  const [predict, setPredict] = useState(false);
 
   const [show, setShow] = useState(true);
+  const [showSpinner, setShowSpinner] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,6 +29,7 @@ const Track = () => {
   const trackId = location.pathname.split("/")[2];
 
   useEffect(() => {
+    setShowSpinner(true);
     const fetchTrack = async () => {
       try {
         const res = await axios.get(
@@ -40,7 +43,7 @@ const Track = () => {
         );
         const fetchStockData = async () => {
           const res = await axios.get(
-            `http://127.0.0.1:8000/api/stock-chart?time=${timeQuery}&${categoriesQuery}`
+            `http://127.0.0.1:8000/api/stock-chart?time=${timeQuery}&${categoriesQuery}&predict=${predict}`
           );
           setStockData({
             labels: res.data[0].date,
@@ -50,7 +53,7 @@ const Track = () => {
               const number3 = Math.floor(Math.random() * 256);
               const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
               const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
-    
+
               return {
                 label: item.name,
                 data: item.close,
@@ -59,6 +62,7 @@ const Track = () => {
               };
             }),
           });
+          setShowSpinner(false);
         };
         fetchStockData();
       } catch (err) {
@@ -66,7 +70,7 @@ const Track = () => {
       }
     };
     fetchTrack();
-  }, []);
+  }, [predict]);
 
   const handleClick = async (e) => {
     e.preventDefault();
@@ -97,6 +101,12 @@ const Track = () => {
             <span key={index}>{industry.Name}&nbsp;</span>
           ))}
         </p>
+        <p>
+          追蹤時間：
+          {track.Times.map((time, index) => (
+            <span key={index}>{time.Date}&nbsp;</span>
+          ))}
+        </p>
         <hr />
         <div className="d-flex justify-content-end">
           <Button onClick={() => setShow(false)} variant="outline-success">
@@ -110,9 +120,25 @@ const Track = () => {
         {stockData ? (
           <>
             <TrackChart chartData={stockData} trackData={track} />
-            <Button variant="primary" onClick={handleClick}>
-              持續追蹤
-            </Button>
+            <div className="my-2 text-center">
+              <Button variant="primary" size="lg" onClick={handleClick}>
+                持續追蹤
+              </Button>{" "}
+              <Button variant="info" size="lg" onClick={() => setPredict(true)}>
+                預測股價
+                {showSpinner ? (
+                  <Spinner
+                    as="span"
+                    animation="grow"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <></>
+                )}
+              </Button>
+            </div>
           </>
         ) : (
           <Spinner animation="border" role="status">

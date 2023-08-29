@@ -1,6 +1,3 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import TrackSerializer, TimeSerializer
@@ -20,6 +17,10 @@ import yfinance as yf
 
 import time
 import pyodbc
+
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from keras.models import load_model
 # Create your views here.
 
 @api_view(['GET'])
@@ -166,6 +167,7 @@ def categoryList(request):
 @api_view(['GET'])
 def stockChart(request):
     time = request.query_params.get('time')
+    predict = request.query_params.get('predict')
     if time is not None:
         trackDay = datetime.datetime.strptime(time, '%Y/%m/%d')
         startDay = trackDay - datetime.timedelta(days=14)
@@ -185,9 +187,50 @@ def stockChart(request):
             elif time is not None:
                 df = yf.download(stock.Ticker, period=f"{delta.days}d", interval="1d")
                 df = df.reset_index()
-                df['Date'] = df['Date'].dt.strftime('%Y/%m/%d')
-                data.append({"name": stock.Name, "date": df['Date'], "close": df['Close']})
+                date = df['Date'].dt.strftime('%Y/%m/%d')
+                close = df['Close']
 
+                if predict == "true":
+                    df = yf.download(stock.Ticker, period='1y')
+                    y = df['Close'].fillna(method='ffill')
+                    y = y.values.reshape(-1, 1)
+
+                    scaler = MinMaxScaler(feature_range=(0, 1))
+                    scaler = scaler.fit(y)
+                    y = scaler.transform(y)
+
+                    n_lookback = 60
+                    n_forecast = 7
+
+                    X = []
+                    Y = []
+
+                    for i in range(n_lookback, len(y) - n_forecast + 1):
+                        X.append(y[i - n_lookback: i])
+                        Y.append(y[i: i + n_forecast])
+
+                    X = np.array(X)
+                    Y = np.array(Y)
+
+                    model = load_model('stock_model/lstm_model.h5', compile = False)
+
+                    X_ = y[- n_lookback:]
+                    X_ = X_.reshape(1, n_lookback, 1)
+
+                    Y_ = model.predict(X_).reshape(-1, 1)
+                    Y_ = scaler.inverse_transform(Y_)
+
+                    df_past = df[['Close']].reset_index()
+                    df_past.rename(columns={'index': 'Date', 'Close': 'Actual'}, inplace=True)
+                    df_past['Date'] = pd.to_datetime(df_past['Date'])
+
+                    df_future = pd.DataFrame(columns=['Date', 'Forecast'])
+                    df_future['Date'] = pd.date_range(start=df_past['Date'].iloc[-1] + pd.Timedelta(days=1), periods=n_forecast)
+                    df_future['Forecast'] = Y_.flatten()
+                    df_future['Date'] = df_future['Date'].dt.strftime('%Y/%m/%d')
+                    close = pd.concat([close, df_future['Forecast']], ignore_index=True)
+                    date = pd.concat([date, df_future['Date']], ignore_index=True)
+                data.append({"name": stock.Name, "date": date, "close": close})
     return Response(data)
 
 @api_view(['GET'])

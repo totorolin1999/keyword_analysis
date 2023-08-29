@@ -18,6 +18,11 @@ const UserNavbar = () => {
               所有追蹤
             </Nav.Link>
           </Nav>
+          <Nav className="justify-content-end">
+            <Nav.Link as={Link} to="/Tracks">
+              登出
+            </Nav.Link>
+          </Nav>
         </Navbar.Collapse>
       </Container>
     </Navbar>
