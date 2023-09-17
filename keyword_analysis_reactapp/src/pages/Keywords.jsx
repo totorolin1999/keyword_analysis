@@ -31,6 +31,7 @@ const Keywords = () => {
 
   const [show, setShow] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
+  const [showSpinner2, setShowSpinner2] = useState(false);
 
   useEffect(() => {
     const fetchAllKeywords = async () => {
@@ -121,6 +122,43 @@ const Keywords = () => {
     }
   }, [selectedCategories]);
 
+  const predictClick = async (e) => {
+    e.preventDefault();
+    setShowSpinner2(true);
+    try {
+      const categoriesQuery = queryString.stringify(
+        { categories: selectedCategories.map((item) => item.value) },
+        { arrayFormat: "bracket-separator", arrayFormatSeparator: "|" }
+      );
+      const fetchStockData = async () => {
+        const res = await axios.get(
+          `http://127.0.0.1:8000/api/stock-chart?${categoriesQuery}&predict=${true}`
+        );
+        setStockData({
+          labels: res.data[0].date,
+          datasets: res.data.map((item) => {
+            const number1 = Math.floor(Math.random() * 256);
+            const number2 = Math.floor(Math.random() * 256);
+            const number3 = Math.floor(Math.random() * 256);
+            const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
+            const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
+
+            return {
+              label: item.name,
+              data: item.close,
+              borderColor: randomColor1,
+              backgroundColor: randomColor2,
+            };
+          }),
+        });
+        setShowSpinner2(false);
+      };
+      fetchStockData();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
     <>
       <Row className="mb-3">
@@ -172,9 +210,23 @@ const Keywords = () => {
               查看
             </Alert>
             <LineChart chartData={stockData} />
-            <div className="d-grid gap-2 mt-2">
-              <Button variant="primary" onClick={handleClick} disabled={show}>
-                {!show ? "追蹤股價走勢" : "您已追蹤股價走勢"}
+            <div className="my-2 text-center">
+              <Button variant="primary" size="lg" onClick={handleClick}>
+                持續追蹤
+              </Button>{" "}
+              <Button variant="info" size="lg" onClick={predictClick}>
+                預測股價
+                {showSpinner2 ? (
+                  <Spinner
+                    as="span"
+                    animation="grow"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <></>
+                )}
               </Button>
             </div>
           </>
