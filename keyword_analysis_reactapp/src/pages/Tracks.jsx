@@ -2,16 +2,20 @@ import useAxios from "../utils/useAxios";
 import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import Button from "react-bootstrap/Button";
-import Table from "react-bootstrap/Table";
 import Card from "react-bootstrap/Card";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
+import ReactPaginate from "react-paginate";
+import "./pagination/pagination.scss";
 
 const Tracks = () => {
   const [tracks, setTracks] = useState([]);
+  const [currentItems, setCurrentItems] = useState([]);
+  const [pageCount, setPageCount] = useState(0);
+  const [itemOffset, setItemOffset] = useState(0);
+  const itemsPerPage = 6;
 
   let api = useAxios();
 
@@ -27,6 +31,18 @@ const Tracks = () => {
     fetchAllTracks();
   }, []);
 
+  useEffect(() => {
+    const endOffset = itemOffset + itemsPerPage;
+    setCurrentItems(tracks.slice(itemOffset, endOffset));
+    setPageCount(Math.ceil(tracks.length / itemsPerPage));
+  }, [itemOffset, itemsPerPage, tracks]);
+
+  // Invoke when user click to request another page.
+  const handlePageClick = (event) => {
+    const newOffset = (event.selected * itemsPerPage) % tracks.length;
+    setItemOffset(newOffset);
+  };
+
   const handleDelete = async (id) => {
     try {
       await api.delete("http://127.0.0.1:8000/api/track-delete/" + id);
@@ -39,7 +55,7 @@ const Tracks = () => {
   return (
     <>
       <Row xs={1} md={3} className="g-4">
-        {tracks.map((track, idx) => (
+        {currentItems.map((track, idx) => (
           <Col key={idx}>
             <Card border="info" bg="Light" text="dark">
               <Card.Body>
@@ -73,6 +89,20 @@ const Tracks = () => {
           </Col>
         ))}
       </Row>
+      <ReactPaginate
+        breakLabel="..."
+        nextLabel="下一頁 >"
+        onPageChange={handlePageClick}
+        pageRangeDisplayed={3}
+        pageCount={pageCount}
+        previousLabel="< 上一頁"
+        renderOnZeroPageCount={null}
+        containerClassName="pagination"
+        pageLinkClassName="page-num"
+        previousLinkClassName="page-num"
+        nextLinkClassName="page-num"
+        activeLinkClassName="active"
+      />
     </>
   );
 };
