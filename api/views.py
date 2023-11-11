@@ -1,5 +1,8 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import TrackSerializer, TimeSerializer
 
 from .models import Industry, IndustryKeyword, CrawlerKeyword, Stock, Time, Track
@@ -25,9 +28,26 @@ from tensorflow.keras.layers import Dense, LSTM
 from tensorflow.keras.models import Sequential
 # Create your views here.
 
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['username'] = user.username
+        # ...
+
+        return token
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
 @api_view(['GET'])
 def apiOverview(request):
     api_urls = {
+        'Token': '/api/token',
+        'Refresh': '/api/token/refresh',
         'keywordList': '/keyword-list/',
         'categoryList': '/category-list/',
     }
@@ -294,26 +314,33 @@ def stockChart(request):
     return Response(data)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def trackList(request):
-    tracks = Track.objects.all()
+    user = request.user
+    tracks = user.track_set.all()
+    # tracks = Track.objects.all()
     serializer = TrackSerializer(tracks, many=True)
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def timeList(request):
     times = Time.objects.all()
     serializer = TimeSerializer(times, many=True)
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def trackDetail(request, pk):
     tracks = Track.objects.get(Track_ID=pk)
     serializer = TrackSerializer(tracks, many=False)
     return Response(serializer.data)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def trackCreate(request):
     data = request.data
+    data["User"] = request.user.id
 
     industryList = []
     for i in data["Industries"]:
@@ -346,6 +373,7 @@ def trackCreate(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def trackTimeCreate(request, pk):
     # tracks = Track.objects.get(Track_ID=pk)
     # serializer = TrackSerializer(tracks, many=False)
@@ -381,6 +409,7 @@ def trackTimeCreate(request, pk):
     return Response(serializer_data)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def trackDelete(request, pk):
     track = Track.objects.get(Track_ID=pk)
     track.delete()

@@ -1,3 +1,4 @@
+import useAxios from "../utils/useAxios";
 import axios from "axios";
 import React from "react";
 import { useState } from "react";
@@ -28,11 +29,13 @@ const Track = () => {
 
   const trackId = location.pathname.split("/")[2];
 
+  let api = useAxios();
+
   useEffect(() => {
     setShowSpinner(true);
     const fetchTrack = async () => {
       try {
-        const res = await axios.get(
+        const res = await api.get(
           `http://127.0.0.1:8000/api/track-detail/${trackId}/`
         );
         setTrack(res.data);

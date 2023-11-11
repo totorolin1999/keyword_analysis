@@ -1,3 +1,4 @@
+import useAxios from "../utils/useAxios";
 import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
@@ -12,10 +13,12 @@ import Row from "react-bootstrap/Row";
 const Tracks = () => {
   const [tracks, setTracks] = useState([]);
 
+  let api = useAxios();
+
   useEffect(() => {
     const fetchAllTracks = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:8000/api/track-list/");
+        const res = await api.get("http://127.0.0.1:8000/api/track-list/");
         setTracks(res.data);
       } catch (err) {
         console.log(err);
@@ -26,7 +29,7 @@ const Tracks = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete("http://127.0.0.1:8000/api/track-delete/" + id);
+      await api.delete("http://127.0.0.1:8000/api/track-delete/" + id);
       window.location.reload();
     } catch (err) {
       console.log(err);

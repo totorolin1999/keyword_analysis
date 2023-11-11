@@ -1,3 +1,4 @@
+import useAxios from "../utils/useAxios";
 import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
@@ -32,6 +33,8 @@ const Keywords = () => {
   const [show, setShow] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showSpinner2, setShowSpinner2] = useState(false);
+
+  let api = useAxios();
 
   useEffect(() => {
     const fetchAllKeywords = async () => {
@@ -106,7 +109,7 @@ const Keywords = () => {
       Industries: selectedCategories.map((item) => item.value),
     };
     try {
-      await axios.post("http://127.0.0.1:8000/api/track-create/", track);
+      await api.post("http://127.0.0.1:8000/api/track-create/", track);
       setShow(true);
       // navigate("/");
     } catch (err) {
