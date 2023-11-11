@@ -3,7 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import TrackSerializer, TimeSerializer
+from .serializers import TrackSerializer, TimeSerializer, UserSerializer
+from rest_framework import status
 
 from .models import Industry, IndustryKeyword, CrawlerKeyword, Stock, Time, Track
 
@@ -27,6 +28,15 @@ from keras.models import load_model
 from tensorflow.keras.layers import Dense, LSTM
 from tensorflow.keras.models import Sequential
 # Create your views here.
+
+@api_view(['POST'])
+def register_user(request):
+    if request.method == 'POST':
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

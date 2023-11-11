@@ -19,7 +19,7 @@ const LoginPage = () => {
           style={{ width: "25rem" }}
           className="mb-2"
         >
-          <Card.Header>管理員登入</Card.Header>
+          <Card.Header>登入</Card.Header>
           <Card.Body>
             <Form onSubmit={loginUser}>
               <Form.Group className="m-3">

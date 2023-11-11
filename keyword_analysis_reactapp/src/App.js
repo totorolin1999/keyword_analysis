@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "./utils/PrivateRoute";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import Keywords from "./pages/Keywords";
 import Tracks from "./pages/Tracks";
 import Track from "./pages/Track";
@@ -14,6 +15,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route element={<LoginPage />} path="/Login" />
+        <Route element={<RegisterPage />} path="/Register" />
         <Route path="/" element={<Keywords />} />
         <Route path="*" element={<Missing />} />
         <Route element={<PrivateRoute />}>

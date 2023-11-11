@@ -38,6 +38,11 @@ const UserNavbar = () => {
                 登入
               </Nav.Link>
             </Nav>
+            <Nav className="justify-content-end">
+              <Nav.Link as={Link} to="/Register">
+                註冊
+              </Nav.Link>
+            </Nav>
           </Navbar.Collapse>
         )}
       </Container>
