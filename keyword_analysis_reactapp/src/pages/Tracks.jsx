@@ -53,11 +53,11 @@ const Tracks = () => {
   };
 
   return (
-    <>
+    <div className="p-5 backgroundColor">
       <Row xs={1} md={3} className="g-4">
         {currentItems.map((track, idx) => (
           <Col key={idx}>
-            <Card border="info" bg="Light" text="dark">
+            <Card border="light" bg="dark" text="white">
               <Card.Body>
                 <Card.Title>{track.Keyword}</Card.Title>
                 <Card.Text>
@@ -71,7 +71,7 @@ const Tracks = () => {
                   ))}
                 </Card.Text>
                 <Button
-                  variant="primary"
+                  variant="success"
                   as={Link}
                   to={`/Track/${track.Track_ID}`}
                   className="me-2"
@@ -103,7 +103,7 @@ const Tracks = () => {
         nextLinkClassName="page-num"
         activeLinkClassName="active"
       />
-    </>
+    </div>
   );
 };
 

@@ -14,14 +14,14 @@
   cursor: pointer;
   border-radius: 3px;
   font-weight: 400;
-  color: black;
+  color: white;
 }
 
 .pagination .page-num:hover {
-  background-color: orange;
-  color: orangered;
+  background-color: black;
+  color: #32de84;
 }
 
 .pagination .active {
-  background-color: orange;
+  background-color: black;
 }

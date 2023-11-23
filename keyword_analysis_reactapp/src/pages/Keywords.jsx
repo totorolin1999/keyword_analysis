@@ -247,7 +247,7 @@ const Keywords = () => {
   };
 
   return (
-    <>
+    <div className="p-5">
       <Row className="mb-3">
         <Col md={6} className="mb-3 mb-md-0">
           <Select
@@ -270,7 +270,7 @@ const Keywords = () => {
         </Col>
       </Row>
       <Button
-        variant="primary"
+        variant="success"
         disabled={btnDisabled}
         onClick={!btnDisabled ? handleSelect : null}
       >
@@ -338,7 +338,7 @@ const Keywords = () => {
       ) : (
         <div></div>
       )}
-    </>
+    </div>
   );
 };
 

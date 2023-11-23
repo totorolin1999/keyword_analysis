@@ -163,7 +163,7 @@ const Track = () => {
 
   //   console.log(track);
   return (
-    <>
+    <div className="p-5">
       <Alert show={show} variant="success">
         <Alert.Heading>關鍵字：{track.Keyword}</Alert.Heading>
         <p>
@@ -242,7 +242,7 @@ const Track = () => {
       ) : (
         <div></div>
       )}
-    </>
+    </div>
   );
 };
 
