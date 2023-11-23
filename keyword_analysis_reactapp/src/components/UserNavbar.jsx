@@ -8,7 +8,7 @@ import AuthContext from "../context/AuthContext";
 const UserNavbar = () => {
   let { user, logoutUser } = useContext(AuthContext);
   return (
-    <Navbar expand="lg" className="bg-body-tertiary">
+    <Navbar expand="lg" className="backgroundColor" data-bs-theme="dark">
       <Container>
         <Navbar.Brand as={Link} to="/">
           熱搜字的股市觀察系統

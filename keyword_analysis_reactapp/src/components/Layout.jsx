@@ -1,15 +1,15 @@
 import { Outlet } from "react-router-dom";
 import UserNavbar from "./UserNavbar";
 // import Footer from "./footer/Footer";
-import Container from "react-bootstrap/Container";
+// import Container from "react-bootstrap/Container";
 
 const Layout = () => {
   return (
     <main className="App">
       <UserNavbar />
-      <Container className="my-5">
+      {/* <Container className="my-5"> */}
         <Outlet />
-      </Container>
+      {/* </Container> */}
       {/* <Footer /> */}
     </main>
   );

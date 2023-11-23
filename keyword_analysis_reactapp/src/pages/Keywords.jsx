@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 // import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
-import queryString from "query-string";
+// import queryString from "query-string";
 import LineChart from "../components/LineChart";
 import Button from "react-bootstrap/Button";
 import Row from "react-bootstrap/Row";
@@ -22,6 +22,8 @@ const Keywords = () => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [isDisabled, setIsDisabled] = useState(true);
   const [stockData, setStockData] = useState(null);
+  const [stockData1, setStockData1] = useState(null);
+  const [stockData2, setStockData2] = useState(null);
 
   const animatedComponents = makeAnimated();
 
@@ -33,6 +35,7 @@ const Keywords = () => {
   const [show, setShow] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
   const [showSpinner2, setShowSpinner2] = useState(false);
+  const [showBtn, setShowBtn] = useState(false);
 
   let api = useAxios();
 
@@ -71,33 +74,73 @@ const Keywords = () => {
 
   const handleSelect = () => {
     setShowSpinner(true);
-    const categoriesQuery = queryString.stringify(
-      { categories: selectedCategories.map((item) => item.value) },
-      { arrayFormat: "bracket-separator", arrayFormatSeparator: "|" }
-    );
+    setStockData(null);
+    setStockData1(null);
+    setStockData2(null);
     const fetchStockData = async () => {
-      const res = await axios.get(
-        `http://127.0.0.1:8000/api/stock-chart?${categoriesQuery}`
-      );
-      setStockData({
-        labels: res.data[0].date,
-        datasets: res.data.map((item) => {
-          const number1 = Math.floor(Math.random() * 256);
-          const number2 = Math.floor(Math.random() * 256);
-          const number3 = Math.floor(Math.random() * 256);
-          const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
-          const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
+      for (var i = 0; i < selectedCategories.length; i++) {
+        const res = await axios.get(
+          `http://127.0.0.1:8000/api/stock-chart?category=${selectedCategories[i].value}`
+        );
+        if (i === 0) {
+          setStockData({
+            labels: res.data[0].date,
+            datasets: res.data.map((item) => {
+              const number1 = Math.floor(Math.random() * 256);
+              const number2 = Math.floor(Math.random() * 256);
+              const number3 = Math.floor(Math.random() * 256);
+              const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
+              const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
 
-          return {
-            label: item.name,
-            data: item.close,
-            borderColor: randomColor1,
-            backgroundColor: randomColor2,
-          };
-        }),
-      });
+              return {
+                label: item.name,
+                data: item.close,
+                borderColor: randomColor1,
+                backgroundColor: randomColor2,
+              };
+            }),
+          });
+        } else if (i === 1) {
+          setStockData1({
+            labels: res.data[0].date,
+            datasets: res.data.map((item) => {
+              const number1 = Math.floor(Math.random() * 256);
+              const number2 = Math.floor(Math.random() * 256);
+              const number3 = Math.floor(Math.random() * 256);
+              const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
+              const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
+
+              return {
+                label: item.name,
+                data: item.close,
+                borderColor: randomColor1,
+                backgroundColor: randomColor2,
+              };
+            }),
+          });
+        } else if (i === 2) {
+          setStockData2({
+            labels: res.data[0].date,
+            datasets: res.data.map((item) => {
+              const number1 = Math.floor(Math.random() * 256);
+              const number2 = Math.floor(Math.random() * 256);
+              const number3 = Math.floor(Math.random() * 256);
+              const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
+              const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
+
+              return {
+                label: item.name,
+                data: item.close,
+                borderColor: randomColor1,
+                backgroundColor: randomColor2,
+              };
+            }),
+          });
+        }
+      }
       setShowSpinner(false);
       setShow(false);
+      setShowBtn(true);
     };
     fetchStockData();
   };
@@ -128,32 +171,73 @@ const Keywords = () => {
   const predictClick = async (e) => {
     e.preventDefault();
     setShowSpinner2(true);
+    setStockData(null);
+    setStockData1(null);
+    setStockData2(null);
     try {
-      const categoriesQuery = queryString.stringify(
-        { categories: selectedCategories.map((item) => item.value) },
-        { arrayFormat: "bracket-separator", arrayFormatSeparator: "|" }
-      );
       const fetchStockData = async () => {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/stock-chart?${categoriesQuery}&predict=${true}`
-        );
-        setStockData({
-          labels: res.data[0].date,
-          datasets: res.data.map((item) => {
-            const number1 = Math.floor(Math.random() * 256);
-            const number2 = Math.floor(Math.random() * 256);
-            const number3 = Math.floor(Math.random() * 256);
-            const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
-            const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
+        for (var i = 0; i < selectedCategories.length; i++) {
+          const res = await axios.get(
+            `http://127.0.0.1:8000/api/stock-chart?category=${
+              selectedCategories[i].value
+            }&predict=${true}`
+          );
+          if (i === 0) {
+            setStockData({
+              labels: res.data[0].date,
+              datasets: res.data.map((item) => {
+                const number1 = Math.floor(Math.random() * 256);
+                const number2 = Math.floor(Math.random() * 256);
+                const number3 = Math.floor(Math.random() * 256);
+                const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
+                const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
 
-            return {
-              label: item.name,
-              data: item.close,
-              borderColor: randomColor1,
-              backgroundColor: randomColor2,
-            };
-          }),
-        });
+                return {
+                  label: item.name,
+                  data: item.close,
+                  borderColor: randomColor1,
+                  backgroundColor: randomColor2,
+                };
+              }),
+            });
+          } else if (i === 1) {
+            setStockData1({
+              labels: res.data[0].date,
+              datasets: res.data.map((item) => {
+                const number1 = Math.floor(Math.random() * 256);
+                const number2 = Math.floor(Math.random() * 256);
+                const number3 = Math.floor(Math.random() * 256);
+                const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
+                const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
+
+                return {
+                  label: item.name,
+                  data: item.close,
+                  borderColor: randomColor1,
+                  backgroundColor: randomColor2,
+                };
+              }),
+            });
+          } else if (i === 2) {
+            setStockData2({
+              labels: res.data[0].date,
+              datasets: res.data.map((item) => {
+                const number1 = Math.floor(Math.random() * 256);
+                const number2 = Math.floor(Math.random() * 256);
+                const number3 = Math.floor(Math.random() * 256);
+                const randomColor1 = `rgba(${number1}, ${number2}, ${number3})`;
+                const randomColor2 = `rgba(${number1}, ${number2}, ${number3}, 0.5)`;
+
+                return {
+                  label: item.name,
+                  data: item.close,
+                  borderColor: randomColor1,
+                  backgroundColor: randomColor2,
+                };
+              }),
+            });
+          }
+        }
         setShowSpinner2(false);
       };
       fetchStockData();
@@ -181,6 +265,7 @@ const Keywords = () => {
             placeholder="選擇產業類別（可複選）"
             isDisabled={isDisabled}
             isLoading={isLoading}
+            isOptionDisabled={() => selectedCategories.length >= 3}
           />
         </Col>
       </Row>
@@ -202,41 +287,57 @@ const Keywords = () => {
         )}
         取得類股走勢
       </Button>
-      <div>
-        {stockData ? (
-          <>
-            <Alert key="success" variant="success" show={show} className="mt-4">
-              您已追蹤成功，前往
-              <Alert.Link as={Link} to="/Tracks">
-                所有追蹤
-              </Alert.Link>
-              查看
-            </Alert>
-            <LineChart chartData={stockData} />
-            <div className="my-2 text-center">
-              <Button variant="primary" size="lg" onClick={handleClick}>
-                持續追蹤
-              </Button>{" "}
-              <Button variant="info" size="lg" onClick={predictClick}>
-                預測股價
-                {showSpinner2 ? (
-                  <Spinner
-                    as="span"
-                    animation="grow"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <></>
-                )}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <div></div>
-        )}
-      </div>
+      <Alert key="success" variant="success" show={show} className="mt-4">
+        您已追蹤成功，前往
+        <Alert.Link as={Link} to="/Tracks">
+          所有追蹤
+        </Alert.Link>
+        查看
+      </Alert>
+      {stockData ? (
+        <div>
+          <LineChart chartData={stockData} />
+        </div>
+      ) : (
+        <div></div>
+      )}
+      {stockData1 ? (
+        <div className="mt-5">
+          <LineChart chartData={stockData1} />
+        </div>
+      ) : (
+        <div></div>
+      )}
+      {stockData2 ? (
+        <div className="mt-5">
+          <LineChart chartData={stockData2} />
+        </div>
+      ) : (
+        <div></div>
+      )}
+      {showBtn ? (
+        <div className="my-4 text-center">
+          <Button variant="primary" onClick={handleClick}>
+            持續追蹤
+          </Button>{" "}
+          <Button variant="info" onClick={predictClick}>
+            預測股價
+            {showSpinner2 ? (
+              <Spinner
+                as="span"
+                animation="grow"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+              />
+            ) : (
+              <></>
+            )}
+          </Button>
+        </div>
+      ) : (
+        <div></div>
+      )}
     </>
   );
 };
