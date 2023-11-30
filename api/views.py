@@ -3,10 +3,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import TrackSerializer, TimeSerializer, UserSerializer
+from .serializers import TrackSerializer, TimeSerializer, UserSerializer, NationSerializer
 from rest_framework import status
 
-from .models import Industry, IndustryKeyword, CrawlerKeyword, Stock, Time, Track
+from .models import Industry, IndustryKeyword, CrawlerKeyword, Stock, Time, Track, Nation
 
 import re
 import json
@@ -97,6 +97,14 @@ def keywordList(request):
     return Response(keywords)
 
 @api_view(['GET'])
+def nationList(request):
+    nations = Nation.objects.all()
+    nationOptions = []
+    for nation in nations:
+        nationOptions.append({"value": nation.Nation_ID, "label": nation.Name})
+    return Response(nationOptions)
+
+@api_view(['GET'])
 def categoryList(request):
     start = time.time()
 
@@ -177,8 +185,10 @@ def categoryList(request):
     for i in list_2:
         cursor.execute('''INSERT INTO keyworddb.dbo.api_crawlerkeyword (Name) VALUES (?)''',i)
     conn.commit()
-
-    industries = Industry.objects.all()
+    
+    nation_id = request.query_params.get('nation')
+    industries = Industry.objects.filter(Nation_id=nation_id)
+    # industries = Industry.objects.all()
     data = []
     for industry in industries:
         queryset1 = CrawlerKeyword.objects.values_list("Name", flat=True)
@@ -359,7 +369,8 @@ def trackCreate(request):
         industryList.append({"Industry_ID": industry.Industry_ID, "Name": industry.Name})
     data["Industries"] = industryList
 
-    df = yf.download("2330.TW", period="1d")
+    stock = Stock.objects.filter(Industry_id=industryList[0]["Industry_ID"]).first()
+    df = yf.download(stock.Ticker, period="1d")
     df = df.reset_index()
     df['Date'] = df['Date'].dt.strftime('%Y/%m/%d')
     trackDate = df.at[0, "Date"]
@@ -389,7 +400,10 @@ def trackTimeCreate(request, pk):
     # tracks = Track.objects.get(Track_ID=pk)
     # serializer = TrackSerializer(tracks, many=False)
 
-    df = yf.download("2330.TW", period="1d")
+    tracks = Track.objects.get(Track_ID=pk)
+    industry_id = tracks.Industries.first().Industry_ID
+    stock = Stock.objects.filter(Industry_id=industry_id).first()
+    df = yf.download(stock.Ticker, period="1d")
     df = df.reset_index()
     df['Date'] = df['Date'].dt.strftime('%Y/%m/%d')
     trackDate = df.at[0, "Date"]
@@ -403,7 +417,6 @@ def trackTimeCreate(request, pk):
         
         time = Time.objects.get(Date=trackDate)
 
-    tracks = Track.objects.get(Track_ID=pk)
     try:
         tracks.Times.get(Date=trackDate)
         serializer = TrackSerializer(tracks, many=False)

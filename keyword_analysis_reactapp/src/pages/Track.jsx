@@ -186,7 +186,7 @@ const Track = () => {
         </div>
       </Alert>
 
-      {!show && <Button onClick={() => setShow(true)}>顯示追蹤資訊</Button>}
+      {!show && <Button onClick={() => setShow(true)} variant="success">顯示追蹤資訊</Button>}
       {/* <div>
         {stockData ? (
           <TrackChart chartData={stockData} trackData={track} />
@@ -221,10 +221,10 @@ const Track = () => {
       )}
       {showBtn ? (
         <div className="my-4 text-center">
-          <Button variant="primary" onClick={handleClick}>
+          <Button variant="success" onClick={handleClick}>
             持續追蹤
           </Button>{" "}
-          <Button variant="info" onClick={() => setPredict(true)}>
+          <Button variant="outline-success" onClick={() => setPredict(true)}>
             預測股價
             {showSpinner ? (
               <Spinner

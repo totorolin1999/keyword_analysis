@@ -3,8 +3,16 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 
+class Nation(models.Model):
+    Nation_ID = models.AutoField(primary_key=True)
+    Name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.Name
+
 class Industry(models.Model):
     Industry_ID = models.AutoField(primary_key=True)
+    Nation = models.ForeignKey(Nation, null=True, on_delete=models.SET_NULL)
     Name = models.CharField(max_length=255)
 
     def __str__(self):
@@ -28,6 +36,7 @@ class CrawlerKeyword(models.Model):
 class Stock(models.Model):
     Stock_ID = models.AutoField(primary_key=True)
     Industry = models.ForeignKey(Industry, null=True, on_delete=models.SET_NULL)
+    Nation = models.ForeignKey(Nation, null=True, on_delete=models.SET_NULL)
     Name = models.CharField(max_length=255)
     Ticker = models.CharField(max_length=255)
 

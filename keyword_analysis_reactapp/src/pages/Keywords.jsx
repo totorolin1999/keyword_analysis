@@ -18,6 +18,8 @@ import Spinner from "react-bootstrap/Spinner";
 const Keywords = () => {
   const [keywords, setKeywords] = useState([]);
   const [selectedKeyword, setSelectedKeyword] = useState("");
+  const [nations, setNations] = useState([]);
+  const [selectedNation, setSelectedNation] = useState("");
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [isDisabled, setIsDisabled] = useState(true);
@@ -48,7 +50,17 @@ const Keywords = () => {
         console.log(err);
       }
     };
+    const fetchAllNations = async () => {
+      try {
+        const res = await axios.get("http://127.0.0.1:8000/api/nation-list/");
+        setNations(res.data);
+        setSelectedNation(res.data[0]);
+      } catch (err) {
+        console.log(err);
+      }
+    };
     fetchAllKeywords();
+    fetchAllNations();
   }, []);
 
   const handleChange = (selectedOption) => {
@@ -57,7 +69,7 @@ const Keywords = () => {
     setLoading(true);
     const fetchCategories = async () => {
       const res = await axios.get(
-        `http://127.0.0.1:8000/api/category-list?keyword=${selectedOption.value}`
+        `http://127.0.0.1:8000/api/category-list?keyword=${selectedOption.value}&nation=${selectedNation.value}`
       );
       setSelectedKeyword(selectedOption.value);
       setCategories(res.data);
@@ -249,11 +261,18 @@ const Keywords = () => {
   return (
     <div className="p-5">
       <Row className="mb-3">
-        <Col md={6} className="mb-3 mb-md-0">
+        <Col md={3} className="mb-3 mb-md-0">
           <Select
             options={keywords}
             onChange={handleChange}
             placeholder="請先選擇關鍵字"
+          />
+        </Col>
+        <Col md={3} className="mb-3 mb-md-0">
+          <Select
+            value={selectedNation}
+            options={nations}
+            onChange={(item) => setSelectedNation(item)}
           />
         </Col>
         <Col md={6}>
@@ -317,10 +336,10 @@ const Keywords = () => {
       )}
       {showBtn ? (
         <div className="my-4 text-center">
-          <Button variant="primary" onClick={handleClick}>
+          <Button variant="success" onClick={handleClick}>
             持續追蹤
           </Button>{" "}
-          <Button variant="info" onClick={predictClick}>
+          <Button variant="outline-success" onClick={predictClick}>
             預測股價
             {showSpinner2 ? (
               <Spinner

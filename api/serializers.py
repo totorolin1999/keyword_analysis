@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Track, Time, Industry
+from .models import Track, Time, Industry, Nation
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -16,6 +16,12 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+class NationSerializer(serializers.ModelSerializer):
+    Nation_ID = serializers.IntegerField(required=False)
+    class Meta:
+        model = Nation
+        fields = '__all__'
 
 class IndustrySerializer(serializers.ModelSerializer):
     Industry_ID = serializers.IntegerField(required=False)
