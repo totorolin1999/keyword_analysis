@@ -9,6 +9,7 @@ import Track from "./pages/Track";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Layout from "./components/Layout";
 import Missing from "./components/Missing";
+import "./pages/layout/layout.scss";
 
 function App() {
   return (

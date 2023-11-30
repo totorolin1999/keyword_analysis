@@ -3,7 +3,6 @@ import AuthContext from "../context/AuthContext";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Container from "react-bootstrap/Container";
-import "./layout/layout.scss";
 import Card from "react-bootstrap/Card";
 
 const RegisterPage = () => {
