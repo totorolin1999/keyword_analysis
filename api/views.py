@@ -3,25 +3,19 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import TrackSerializer, TimeSerializer, UserSerializer, NationSerializer
+from .serializers import TrackSerializer, TimeSerializer, UserSerializer
 from rest_framework import status
-
-from .models import Industry, IndustryKeyword, CrawlerKeyword, Stock, Time, Track, Nation
-
+from .models import Industry, IndustryKeyword, CrawlerKeyword, Stock, Time, Track, Nation, ForeignKeyword
 import re
 import json
 import requests
 import pandas as pd
-from bs4 import BeautifulSoup
 import datetime
-
 import urllib.request as req
 import jieba
 import yfinance as yf
-
 import time
 import pyodbc
-
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from keras.models import load_model
@@ -98,14 +92,6 @@ def keywordList(request):
 
 @api_view(['GET'])
 def nationList(request):
-    nations = Nation.objects.all()
-    nationOptions = []
-    for nation in nations:
-        nationOptions.append({"value": nation.Nation_ID, "label": nation.Name})
-    return Response(nationOptions)
-
-@api_view(['GET'])
-def categoryList(request):
     start = time.time()
 
     header = {
@@ -186,6 +172,20 @@ def categoryList(request):
         cursor.execute('''INSERT INTO keyworddb.dbo.api_crawlerkeyword (Name) VALUES (?)''',i)
     conn.commit()
     
+    queryset1 = CrawlerKeyword.objects.values_list("Name", flat=True)
+    queryset2 = ForeignKeyword.objects.values_list("Name", flat=True)
+    intersection_qs = queryset1.intersection(queryset2)
+    if intersection_qs.count() > 4:
+        nations = Nation.objects.all().order_by('-Nation_ID').values()
+    else:
+        nations = Nation.objects.all().order_by('Nation_ID').values()
+    nationOptions = []
+    for nation in nations:
+        nationOptions.append({"value": nation["Nation_ID"], "label": nation["Name"]})
+    return Response(nationOptions)
+
+@api_view(['GET'])
+def categoryList(request):
     nation_id = request.query_params.get('nation')
     industries = Industry.objects.filter(Nation_id=nation_id)
     # industries = Industry.objects.all()
@@ -200,9 +200,6 @@ def categoryList(request):
     categories = []
     for i in data:
         categories.append({"value": i[1], "label": i[2]})
-
-    end = time.time()
-    print(format(end-start))
     
     return Response(categories)
 

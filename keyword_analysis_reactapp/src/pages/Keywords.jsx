@@ -19,10 +19,12 @@ const Keywords = () => {
   const [keywords, setKeywords] = useState([]);
   const [selectedKeyword, setSelectedKeyword] = useState("");
   const [nations, setNations] = useState([]);
-  const [selectedNation, setSelectedNation] = useState("");
+  const [selectedNation, setSelectedNation] = useState(null);
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [isDisabled, setIsDisabled] = useState(true);
+  const [keywordDisabled, setKeywordDisabled] = useState(true);
+  const [nationDisabled, setNationDisabled] = useState(true);
+  const [categoryDisabled, setCategoryDisabled] = useState(true);
   const [stockData, setStockData] = useState(null);
   const [stockData1, setStockData1] = useState(null);
   const [stockData2, setStockData2] = useState(null);
@@ -32,7 +34,8 @@ const Keywords = () => {
   // const navigate = useNavigate();
 
   const [btnDisabled, setbtnDisabled] = useState(true);
-  const [isLoading, setLoading] = useState(false);
+  const [nationLoading, setNationLoading] = useState(false);
+  const [categoryLoading, setCategoryLoading] = useState(false);
 
   const [show, setShow] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
@@ -46,40 +49,49 @@ const Keywords = () => {
       try {
         const res = await axios.get("http://127.0.0.1:8000/api/keyword-list/");
         setKeywords(res.data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    const fetchAllNations = async () => {
-      try {
-        const res = await axios.get("http://127.0.0.1:8000/api/nation-list/");
-        setNations(res.data);
-        setSelectedNation(res.data[0]);
+        setKeywordDisabled(false);
       } catch (err) {
         console.log(err);
       }
     };
     fetchAllKeywords();
-    fetchAllNations();
   }, []);
 
-  const handleChange = (selectedOption) => {
-    setIsDisabled(true);
+  const handleChange1 = (selectedOption) => {
+    setNationDisabled(true);
+    setSelectedNation(null);
+    setNationLoading(true);
+    setCategoryDisabled(true);
+    setSelectedCategories([]);
+    setSelectedKeyword(selectedOption.value);
+    const fetchNations = async () => {
+      try {
+        const res = await axios.get(
+          `http://127.0.0.1:8000/api/nation-list?keyword=${selectedOption.value}`
+        );
+        setNations(res.data);
+        setNationDisabled(false);
+        setNationLoading(false);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchNations();
+  };
+
+  const handleChange2 = (selectedOption) => {
+    setSelectedNation(selectedOption);
+    setCategoryDisabled(true);
     setbtnDisabled(true);
-    setLoading(true);
+    setSelectedCategories([]);
+    setCategoryLoading(true);
     const fetchCategories = async () => {
       const res = await axios.get(
-        `http://127.0.0.1:8000/api/category-list?keyword=${selectedOption.value}&nation=${selectedNation.value}`
+        `http://127.0.0.1:8000/api/category-list?nation=${selectedOption.value}`
       );
-      setSelectedKeyword(selectedOption.value);
       setCategories(res.data);
-      setIsDisabled(false);
-      setLoading(false);
-      if (selectedCategories.length === 0) {
-        setbtnDisabled(true);
-      } else {
-        setbtnDisabled(false);
-      }
+      setCategoryDisabled(false);
+      setCategoryLoading(false);
     };
     fetchCategories();
   };
@@ -264,15 +276,19 @@ const Keywords = () => {
         <Col md={3} className="mb-3 mb-md-0">
           <Select
             options={keywords}
-            onChange={handleChange}
-            placeholder="請先選擇關鍵字"
+            onChange={handleChange1}
+            placeholder="請選擇關鍵字"
+            isDisabled={keywordDisabled}
           />
         </Col>
         <Col md={3} className="mb-3 mb-md-0">
           <Select
-            value={selectedNation}
             options={nations}
-            onChange={(item) => setSelectedNation(item)}
+            onChange={handleChange2}
+            placeholder="請選擇股市類別"
+            isDisabled={nationDisabled}
+            isLoading={nationLoading}
+            value={selectedNation}
           />
         </Col>
         <Col md={6}>
@@ -282,9 +298,10 @@ const Keywords = () => {
             isMulti
             options={categories}
             placeholder="選擇產業類別（可複選）"
-            isDisabled={isDisabled}
-            isLoading={isLoading}
+            isDisabled={categoryDisabled}
+            isLoading={categoryLoading}
             isOptionDisabled={() => selectedCategories.length >= 3}
+            value={selectedCategories}
           />
         </Col>
       </Row>
