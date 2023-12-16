@@ -338,7 +338,7 @@ def stockChart(request):
 @permission_classes([IsAuthenticated])
 def trackList(request):
     user = request.user
-    tracks = user.track_set.all()
+    tracks = user.track_set.all().order_by('-Track_ID')
     # tracks = Track.objects.all()
     serializer = TrackSerializer(tracks, many=True)
     return Response(serializer.data)
