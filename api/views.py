@@ -5,7 +5,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import TrackSerializer, TimeSerializer, UserSerializer
 from rest_framework import status
-from .models import Industry, IndustryKeyword, CrawlerKeyword, Stock, Time, Track, Nation, ForeignKeyword
+from .models import Industry, IndustryKeyword, Stock, Time, Track, Nation, ForeignKeyword
 import re
 import json
 import requests
@@ -90,8 +90,7 @@ def keywordList(request):
 
     return Response(keywords)
 
-@api_view(['GET'])
-def nationList(request):
+def crawlerKeyword(request):
     start = time.time()
 
     header = {
@@ -143,7 +142,6 @@ def nationList(request):
             break
     end = time.time()
     print(format(end-start))
-    start = time.time()
     # data=req.Request(url,headers=header)
 
     # with req.urlopen(data) as response:
@@ -154,28 +152,21 @@ def nationList(request):
         return "".join(pattern.findall(txt))
     
     try:
-        list_2 = list(jieba.cut(extract_chinese(dataStr)))
+        crawlerList = list(jieba.cut(extract_chinese(dataStr)))
     except:
         dataStr = ''
-        list_2 = list(jieba.cut(extract_chinese(dataStr)))
+        crawlerList = list(jieba.cut(extract_chinese(dataStr)))
         print("發生錯誤！")
-    
-    conn = pyodbc.connect(
-        Trusted_Connection='Yes',
-        Driver='{ODBC Driver 17 for SQL Server}',
-        Server='localhost\SQLEXPRESS',
-        Database='keyworddb'
-    )
-    cursor = conn.cursor()
-    cursor.execute('''TRUNCATE TABLE keyworddb.dbo.api_crawlerkeyword''')
-    for i in list_2:
-        cursor.execute('''INSERT INTO keyworddb.dbo.api_crawlerkeyword (Name) VALUES (?)''',i)
-    conn.commit()
-    
-    queryset1 = CrawlerKeyword.objects.values_list("Name", flat=True)
-    queryset2 = ForeignKeyword.objects.values_list("Name", flat=True)
-    intersection_qs = queryset1.intersection(queryset2)
-    if intersection_qs.count() > 4:
+
+    return crawlerList
+
+@api_view(['GET'])
+def nationList(request):
+    crawlerList = crawlerKeyword(request)
+    foreignQueryset = ForeignKeyword.objects.values_list("Name", flat=True)
+    foreignList = list(foreignQueryset)
+    commonWords = set(crawlerList) & set(foreignList)
+    if len(commonWords) > 4:
         nations = Nation.objects.all().order_by('-Nation_ID').values()
     else:
         nations = Nation.objects.all().order_by('Nation_ID').values()
@@ -186,15 +177,16 @@ def nationList(request):
 
 @api_view(['GET'])
 def categoryList(request):
+    crawlerList = crawlerKeyword(request)
     nation_id = request.query_params.get('nation')
     industries = Industry.objects.filter(Nation_id=nation_id)
     # industries = Industry.objects.all()
     data = []
     for industry in industries:
-        queryset1 = CrawlerKeyword.objects.values_list("Name", flat=True)
-        queryset2 = IndustryKeyword.objects.filter(Industry_id=industry.Industry_ID).values_list("Name", flat=True)
-        intersection_qs = queryset1.intersection(queryset2)
-        data.append((intersection_qs.count(), industry.Industry_ID, industry.Name))
+        industryQueryset = IndustryKeyword.objects.filter(Industry_id=industry.Industry_ID).values_list("Name", flat=True)
+        industryList = list(industryQueryset)
+        commonWords = set(crawlerList) & set(industryList)
+        data.append((len(commonWords), industry.Industry_ID, industry.Name))
     data = sorted(data,key=lambda x: x[0], reverse = True)
     
     categories = []

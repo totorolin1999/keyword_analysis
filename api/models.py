@@ -33,13 +33,6 @@ class IndustryKeyword(models.Model):
     def __str__(self):
         return self.Name
     
-class CrawlerKeyword(models.Model):
-    CK_ID = models.AutoField(primary_key=True)
-    Name = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.Name
-    
 class Stock(models.Model):
     Stock_ID = models.AutoField(primary_key=True)
     Industry = models.ForeignKey(Industry, null=True, on_delete=models.SET_NULL)

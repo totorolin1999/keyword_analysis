@@ -87,7 +87,7 @@ const Keywords = () => {
     setCategoryLoading(true);
     const fetchCategories = async () => {
       const res = await axios.get(
-        `http://127.0.0.1:8000/api/category-list?nation=${selectedOption.value}`
+        `http://127.0.0.1:8000/api/category-list?keyword=${selectedKeyword}&nation=${selectedOption.value}`
       );
       setCategories(res.data);
       setCategoryDisabled(false);
