@@ -1,5 +1,5 @@
 import useAxios from "../utils/useAxios";
-import React from "react";
+import React, { useContext } from "react";
 import { useEffect } from "react";
 import { useState } from "react";
 import axios from "axios";
@@ -14,6 +14,9 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Alert from "react-bootstrap/Alert";
 import Spinner from "react-bootstrap/Spinner";
+import Container from "react-bootstrap/Container";
+import Card from "react-bootstrap/Card";
+import AuthContext from "../context/AuthContext";
 
 const Keywords = () => {
   const [keywords, setKeywords] = useState([]);
@@ -43,6 +46,8 @@ const Keywords = () => {
   const [showBtn, setShowBtn] = useState(false);
 
   let api = useAxios();
+
+  let { user, logoutUser } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchAllKeywords = async () => {
@@ -271,7 +276,7 @@ const Keywords = () => {
   };
 
   return (
-    <div className="p-5">
+    <Container className="py-5">
       <Row className="mb-3">
         <Col md={3} className="mb-3 mb-md-0">
           <Select
@@ -323,19 +328,24 @@ const Keywords = () => {
         )}
         取得類股走勢
       </Button>
-      <Alert key="success" variant="success" show={show} className="mt-4">
-        您已追蹤成功，前往
-        <Alert.Link as={Link} to="/Tracks">
-          所有追蹤
-        </Alert.Link>
-        查看
-      </Alert>
       {stockData ? (
         <div>
           <LineChart chartData={stockData} />
         </div>
       ) : (
-        <div></div>
+        <Row className="justify-content-md-center">
+          <Card style={{ width: "23rem" }}>
+            <Card.Body>
+              <Card.Title>Card Title</Card.Title>
+              <Card.Text>
+                Some quick example text to build on the card title and make up
+                the bulk of the card's content.
+              </Card.Text>
+              {/* <Button variant="primary">Go somewhere</Button> */}
+            </Card.Body>
+            <Card.Img variant="top" src="../../images/1549922167.svg" />
+          </Card>
+        </Row>
       )}
       {stockData1 ? (
         <div className="mt-5">
@@ -353,9 +363,13 @@ const Keywords = () => {
       )}
       {showBtn ? (
         <div className="my-4 text-center">
-          <Button variant="success" onClick={handleClick}>
-            持續追蹤
-          </Button>{" "}
+          {user ? (
+            <Button variant="success" onClick={handleClick}>
+              持續追蹤
+            </Button>
+          ) : (
+            <></>
+          )}
           <Button variant="outline-success" onClick={predictClick}>
             預測股價
             {showSpinner2 ? (
@@ -374,7 +388,14 @@ const Keywords = () => {
       ) : (
         <div></div>
       )}
-    </div>
+      <Alert key="success" variant="success" show={show} className="mt-4">
+        您已追蹤成功，前往
+        <Alert.Link as={Link} to="/Tracks">
+          所有追蹤
+        </Alert.Link>
+        查看
+      </Alert>
+    </Container>
   );
 };
 

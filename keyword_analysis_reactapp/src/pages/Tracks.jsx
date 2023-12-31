@@ -9,6 +9,7 @@ import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import ReactPaginate from "react-paginate";
 import "./pagination/pagination.scss";
+import Container from "react-bootstrap/Container";
 
 const Tracks = () => {
   const [tracks, setTracks] = useState([]);
@@ -53,56 +54,76 @@ const Tracks = () => {
   };
 
   return (
-    <div className="p-5 backgroundColor">
-      <Row xs={1} md={3} className="g-4">
-        {currentItems.map((track, idx) => (
-          <Col key={idx}>
-            <Card border="light" bg="dark" text="white">
+    <div className="backgroundColor">
+      <Container className="py-5">
+        {tracks.length ? (
+          <div>
+            <Row xs={1} md={3} className="g-4">
+              {currentItems.map((track, idx) => (
+                <Col key={idx}>
+                  <Card border="light" bg="dark" text="white">
+                    <Card.Body>
+                      <Card.Title>{track.Keyword}</Card.Title>
+                      <Card.Text>
+                        {track.Industries.map((industry, index) => (
+                          <span key={index}>{industry.Name}&nbsp;</span>
+                        ))}
+                      </Card.Text>
+                      <Card.Text>
+                        {track.Times.map((time, index) => (
+                          <span key={index}>{time.Date}&nbsp;</span>
+                        ))}
+                      </Card.Text>
+                      <Button
+                        variant="success"
+                        as={Link}
+                        to={`/Track/${track.Track_ID}`}
+                        className="me-2"
+                      >
+                        查看股價走勢
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleDelete(track.Track_ID)}
+                      >
+                        刪除
+                      </Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+            <ReactPaginate
+              breakLabel="..."
+              nextLabel="下一頁 >"
+              onPageChange={handlePageClick}
+              pageRangeDisplayed={3}
+              pageCount={pageCount}
+              previousLabel="< 上一頁"
+              renderOnZeroPageCount={null}
+              containerClassName="pagination"
+              pageLinkClassName="page-num"
+              previousLinkClassName="page-num"
+              nextLinkClassName="page-num"
+              activeLinkClassName="active"
+            />
+          </div>
+        ) : (
+          <Row className="justify-content-md-center">
+            <Card style={{ width: "23rem" }}>
               <Card.Body>
-                <Card.Title>{track.Keyword}</Card.Title>
+                <Card.Title>Card Title</Card.Title>
                 <Card.Text>
-                  {track.Industries.map((industry, index) => (
-                    <span key={index}>{industry.Name}&nbsp;</span>
-                  ))}
+                  Some quick example text to build on the card title and make up
+                  the bulk of the card's content.
                 </Card.Text>
-                <Card.Text>
-                  {track.Times.map((time, index) => (
-                    <span key={index}>{time.Date}&nbsp;</span>
-                  ))}
-                </Card.Text>
-                <Button
-                  variant="success"
-                  as={Link}
-                  to={`/Track/${track.Track_ID}`}
-                  className="me-2"
-                >
-                  查看股價走勢
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => handleDelete(track.Track_ID)}
-                >
-                  刪除
-                </Button>
+                {/* <Button variant="primary">Go somewhere</Button> */}
               </Card.Body>
+              <Card.Img variant="top" src="../../images/1549922167.svg" />
             </Card>
-          </Col>
-        ))}
-      </Row>
-      <ReactPaginate
-        breakLabel="..."
-        nextLabel="下一頁 >"
-        onPageChange={handlePageClick}
-        pageRangeDisplayed={3}
-        pageCount={pageCount}
-        previousLabel="< 上一頁"
-        renderOnZeroPageCount={null}
-        containerClassName="pagination"
-        pageLinkClassName="page-num"
-        previousLinkClassName="page-num"
-        nextLinkClassName="page-num"
-        activeLinkClassName="active"
-      />
+          </Row>
+        )}
+      </Container>
     </div>
   );
 };
