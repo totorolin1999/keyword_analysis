@@ -23,7 +23,7 @@ const Tracks = () => {
   useEffect(() => {
     const fetchAllTracks = async () => {
       try {
-        const res = await api.get("http://127.0.0.1:8000/api/track-list/");
+        const res = await api.get("https://keywordanalysisapp.onrender.com/api/track-list/");
         setTracks(res.data);
       } catch (err) {
         console.log(err);
@@ -46,7 +46,7 @@ const Tracks = () => {
 
   const handleDelete = async (id) => {
     try {
-      await api.delete("http://127.0.0.1:8000/api/track-delete/" + id);
+      await api.delete("https://keywordanalysisapp.onrender.com/api/track-delete/" + id);
       window.location.reload();
     } catch (err) {
       console.log(err);

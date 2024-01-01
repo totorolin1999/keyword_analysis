@@ -42,7 +42,7 @@ const Track = () => {
     const fetchTrack = async () => {
       try {
         const res = await api.get(
-          `http://127.0.0.1:8000/api/track-detail/${trackId}/`
+          `https://keywordanalysisapp.onrender.com/api/track-detail/${trackId}/`
         );
         setTrack(res.data);
         const timeQuery = res.data.Times[0].Date;
@@ -53,7 +53,7 @@ const Track = () => {
         const categories = res.data.Industries.map((item) => item.Industry_ID);
         const fetchStockData = async () => {
           // const res = await axios.get(
-          //   `http://127.0.0.1:8000/api/stock-chart?time=${timeQuery}&${categoriesQuery}&predict=${predict}`
+          //   `https://keywordanalysisapp.onrender.com/api/stock-chart?time=${timeQuery}&${categoriesQuery}&predict=${predict}`
           // );
           // setStockData({
           //   labels: res.data[0].date,
@@ -74,7 +74,7 @@ const Track = () => {
           // });
           for (var i = 0; i < categories.length; i++) {
             const res = await axios.get(
-              `http://127.0.0.1:8000/api/stock-chart?time=${timeQuery}&category=${categories[i]}&predict=${predict}`
+              `https://keywordanalysisapp.onrender.com/api/stock-chart?time=${timeQuery}&category=${categories[i]}&predict=${predict}`
             );
             if (i === 0) {
               setStockData({
@@ -148,7 +148,7 @@ const Track = () => {
     const fetchNewTrack = async () => {
       try {
         const res = await api.get(
-          `http://127.0.0.1:8000/api/track-time-create/${trackId}/`
+          `https://keywordanalysisapp.onrender.com/api/track-time-create/${trackId}/`
         );
         alert(res.data.Message);
         // setTrack(res.data);

@@ -52,7 +52,7 @@ const Keywords = () => {
   useEffect(() => {
     const fetchAllKeywords = async () => {
       try {
-        const res = await axios.get("http://127.0.0.1:8000/api/keyword-list/");
+        const res = await axios.get("https://keywordanalysisapp.onrender.com/api/keyword-list/");
         setKeywords(res.data);
         setKeywordDisabled(false);
       } catch (err) {
@@ -72,7 +72,7 @@ const Keywords = () => {
     const fetchNations = async () => {
       try {
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/nation-list?keyword=${selectedOption.value}`
+          `https://keywordanalysisapp.onrender.com/api/nation-list?keyword=${selectedOption.value}`
         );
         setNations(res.data);
         setNationDisabled(false);
@@ -92,7 +92,7 @@ const Keywords = () => {
     setCategoryLoading(true);
     const fetchCategories = async () => {
       const res = await axios.get(
-        `http://127.0.0.1:8000/api/category-list?keyword=${selectedKeyword}&nation=${selectedOption.value}`
+        `https://keywordanalysisapp.onrender.com/api/category-list?keyword=${selectedKeyword}&nation=${selectedOption.value}`
       );
       setCategories(res.data);
       setCategoryDisabled(false);
@@ -109,7 +109,7 @@ const Keywords = () => {
     const fetchStockData = async () => {
       for (var i = 0; i < selectedCategories.length; i++) {
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/stock-chart?category=${selectedCategories[i].value}`
+          `https://keywordanalysisapp.onrender.com/api/stock-chart?category=${selectedCategories[i].value}`
         );
         if (i === 0) {
           setStockData({
@@ -181,7 +181,7 @@ const Keywords = () => {
       Industries: selectedCategories.map((item) => item.value),
     };
     try {
-      await api.post("http://127.0.0.1:8000/api/track-create/", track);
+      await api.post("https://keywordanalysisapp.onrender.com/api/track-create/", track);
       setShow(true);
       // navigate("/");
     } catch (err) {
@@ -207,7 +207,7 @@ const Keywords = () => {
       const fetchStockData = async () => {
         for (var i = 0; i < selectedCategories.length; i++) {
           const res = await axios.get(
-            `http://127.0.0.1:8000/api/stock-chart?category=${
+            `https://keywordanalysisapp.onrender.com/api/stock-chart?category=${
               selectedCategories[i].value
             }&predict=${true}`
           );
