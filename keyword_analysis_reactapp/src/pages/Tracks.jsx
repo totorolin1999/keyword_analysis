@@ -10,6 +10,7 @@ import Row from "react-bootstrap/Row";
 import ReactPaginate from "react-paginate";
 import "./pagination/pagination.scss";
 import Container from "react-bootstrap/Container";
+import API_BASE_URL from '../apiConfig';
 
 const Tracks = () => {
   const [tracks, setTracks] = useState([]);
@@ -23,7 +24,7 @@ const Tracks = () => {
   useEffect(() => {
     const fetchAllTracks = async () => {
       try {
-        const res = await api.get("https://keywordanalysisapp.onrender.com/api/track-list/");
+        const res = await api.get(`${API_BASE_URL}/api/track-list/`);
         setTracks(res.data);
       } catch (err) {
         console.log(err);
@@ -46,7 +47,7 @@ const Tracks = () => {
 
   const handleDelete = async (id) => {
     try {
-      await api.delete("https://keywordanalysisapp.onrender.com/api/track-delete/" + id);
+      await api.delete(`${API_BASE_URL}/api/track-delete/` + id);
       window.location.reload();
     } catch (err) {
       console.log(err);

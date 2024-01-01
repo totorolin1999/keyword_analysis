@@ -10,6 +10,7 @@ import TrackChart from "../components/TrackChart";
 import Button from "react-bootstrap/Button";
 import Alert from "react-bootstrap/Alert";
 import Spinner from "react-bootstrap/Spinner";
+import API_BASE_URL from '../apiConfig';
 
 const Track = () => {
   const [track, setTrack] = useState({
@@ -42,7 +43,7 @@ const Track = () => {
     const fetchTrack = async () => {
       try {
         const res = await api.get(
-          `https://keywordanalysisapp.onrender.com/api/track-detail/${trackId}/`
+          `${API_BASE_URL}/api/track-detail/${trackId}/`
         );
         setTrack(res.data);
         const timeQuery = res.data.Times[0].Date;
@@ -53,7 +54,7 @@ const Track = () => {
         const categories = res.data.Industries.map((item) => item.Industry_ID);
         const fetchStockData = async () => {
           // const res = await axios.get(
-          //   `https://keywordanalysisapp.onrender.com/api/stock-chart?time=${timeQuery}&${categoriesQuery}&predict=${predict}`
+          //   `${API_BASE_URL}/api/stock-chart?time=${timeQuery}&${categoriesQuery}&predict=${predict}`
           // );
           // setStockData({
           //   labels: res.data[0].date,
@@ -74,7 +75,7 @@ const Track = () => {
           // });
           for (var i = 0; i < categories.length; i++) {
             const res = await axios.get(
-              `https://keywordanalysisapp.onrender.com/api/stock-chart?time=${timeQuery}&category=${categories[i]}&predict=${predict}`
+              `${API_BASE_URL}/api/stock-chart?time=${timeQuery}&category=${categories[i]}&predict=${predict}`
             );
             if (i === 0) {
               setStockData({
@@ -148,7 +149,7 @@ const Track = () => {
     const fetchNewTrack = async () => {
       try {
         const res = await api.get(
-          `https://keywordanalysisapp.onrender.com/api/track-time-create/${trackId}/`
+          `${API_BASE_URL}/api/track-time-create/${trackId}/`
         );
         alert(res.data.Message);
         // setTrack(res.data);
