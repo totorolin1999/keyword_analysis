@@ -15,10 +15,10 @@ import urllib.request as req
 import jieba
 import yfinance as yf
 import time
-import pyodbc
+# import pyodbc
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from keras.models import load_model
+# from keras.models import load_model
 from tensorflow.keras.layers import Dense, LSTM
 from tensorflow.keras.models import Sequential
 # Create your views here.
