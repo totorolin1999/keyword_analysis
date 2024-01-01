@@ -13,21 +13,35 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
+from urllib.parse import urlparse
+from django.core.management.utils import get_random_secret_key
+import sys
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+import environ
+
+env = environ.Env()
+
+environ.Env.read_env()
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-5jl@83-g6yx)n*&#ys@m#d0g5&u6^)=@6d1m&4p^=kosuq_ytw'
+# SECRET_KEY = 'django-insecure-5jl@83-g6yx)n*&#ys@m#d0g5&u6^)=@6d1m&4p^=kosuq_ytw'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -120,18 +134,27 @@ WSGI_APPLICATION = 'keyword_analysis_drf.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'mssql',
+#         'NAME': 'keyworddb',
+#         'USER':'totoro',
+#         'PASSWORD':'totoro',
+#         'HOST':'localhost\SQLEXPRESS',
+#         'OPTIONS':{
+#             'driver':'ODBC Driver 17 for SQL Server',
+#             'isolation_level':'READ UNCOMMITTED' #to prevent deadlocks
+#         }
+#     }
+# }
+
+
+# Render PostgreSQL (Live)
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'keyworddb',
-        'USER':'totoro',
-        'PASSWORD':'totoro',
-        'HOST':'localhost\SQLEXPRESS',
-        'OPTIONS':{
-            'driver':'ODBC Driver 17 for SQL Server',
-            'isolation_level':'READ UNCOMMITTED' #to prevent deadlocks
-        }
-    }
+
+    'default': dj_database_url.parse(env('DATABASE_URL'))
+
 }
 
 
