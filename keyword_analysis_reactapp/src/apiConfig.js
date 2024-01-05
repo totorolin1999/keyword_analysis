@@ -1,2 +1,2 @@
-const API_BASE_URL = 'https://keywordanalysisapp.onrender.com';
+const API_BASE_URL = process.env.REACT_APP_APP_URL;
 export default API_BASE_URL;
