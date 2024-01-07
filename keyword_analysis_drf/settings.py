@@ -134,28 +134,28 @@ WSGI_APPLICATION = 'keyword_analysis_drf.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'mssql',
-#         'NAME': 'keyworddb',
-#         'USER':'totoro',
-#         'PASSWORD':'totoro',
-#         'HOST':'localhost\SQLEXPRESS',
-#         'OPTIONS':{
-#             'driver':'ODBC Driver 17 for SQL Server',
-#             'isolation_level':'READ UNCOMMITTED' #to prevent deadlocks
-#         }
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': env('MSSQL_NAME'),
+        'USER': env('MSSQL_USER'),
+        'PASSWORD': env('MSSQL_PASSWORD'),
+        'HOST': env('MSSQL_HOST'),
+        'OPTIONS':{
+            'driver':'ODBC Driver 17 for SQL Server',
+            'isolation_level':'READ UNCOMMITTED' #to prevent deadlocks
+        }
+    }
+}
 
 
 # Render PostgreSQL (Live)
 
-DATABASES = {
+# DATABASES = {
 
-    'default': dj_database_url.parse(env('DATABASE_URL'))
+#     'default': dj_database_url.parse(env('DATABASE_URL'))
 
-}
+# }
 
 
 # Password validation
