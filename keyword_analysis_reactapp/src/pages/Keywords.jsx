@@ -46,6 +46,8 @@ const Keywords = () => {
   const [showSpinner2, setShowSpinner2] = useState(false);
   const [showBtn, setShowBtn] = useState(false);
 
+  const [imageSrc, setImageSrc] = useState('');
+
   let api = useAxios();
 
   let { user, logoutUser } = useContext(AuthContext);
@@ -60,6 +62,7 @@ const Keywords = () => {
         console.log(err);
       }
     };
+    setImageSrc(`${API_BASE_URL}/media/image1.svg`);
     fetchAllKeywords();
   }, []);
 
@@ -344,7 +347,7 @@ const Keywords = () => {
               </Card.Text>
               {/* <Button variant="primary">Go somewhere</Button> */}
             </Card.Body>
-            <Card.Img variant="top" src="../../images/1549922167.svg" />
+            <Card.Img variant="top" src={imageSrc} />
           </Card>
         </Row>
       )}

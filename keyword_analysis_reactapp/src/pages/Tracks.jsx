@@ -19,6 +19,8 @@ const Tracks = () => {
   const [itemOffset, setItemOffset] = useState(0);
   const itemsPerPage = 6;
 
+  const [imageSrc, setImageSrc] = useState('');
+
   let api = useAxios();
 
   useEffect(() => {
@@ -30,6 +32,7 @@ const Tracks = () => {
         console.log(err);
       }
     };
+    setImageSrc(`${API_BASE_URL}/media/image1.svg`);
     fetchAllTracks();
   }, []);
 
@@ -120,7 +123,7 @@ const Tracks = () => {
                 </Card.Text>
                 {/* <Button variant="primary">Go somewhere</Button> */}
               </Card.Body>
-              <Card.Img variant="top" src="../../images/1549922167.svg" />
+              <Card.Img variant="top" src={imageSrc} />
             </Card>
           </Row>
         )}
