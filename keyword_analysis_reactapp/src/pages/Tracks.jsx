@@ -17,7 +17,7 @@ const Tracks = () => {
   const [currentItems, setCurrentItems] = useState([]);
   const [pageCount, setPageCount] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
-  const itemsPerPage = 6;
+  const itemsPerPage = 3;
 
   const [imageSrc, setImageSrc] = useState('');
 
@@ -62,7 +62,7 @@ const Tracks = () => {
       <Container className="py-5">
         {tracks.length ? (
           <div>
-            <Row xs={1} md={3} className="g-4">
+            <Row xs={1} md={3} className="g-4 my-md-5">
               {currentItems.map((track, idx) => (
                 <Col key={idx}>
                   <Card border="light" bg="dark" text="white">
