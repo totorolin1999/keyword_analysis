@@ -16,11 +16,11 @@ import jieba
 import yfinance as yf
 import time
 # import pyodbc
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+# import numpy as np
+# from sklearn.preprocessing import MinMaxScaler
 # from keras.models import load_model
-from tensorflow.keras.layers import Dense, LSTM
-from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense, LSTM
+# from tensorflow.keras.models import Sequential
 # Create your views here.
 
 @api_view(['POST'])
@@ -195,54 +195,83 @@ def categoryList(request):
     
     return Response(categories)
 
-def lstmPredict(df):
-    # df = yf.download(stock.Ticker, period='1y') 配合load_model使用
-    y = df['Close'].fillna(method='ffill')
-    y = y.values.reshape(-1, 1)
+# def lstmPredict(df):
+#     # df = yf.download(stock.Ticker, period='1y') 配合load_model使用
+#     y = df['Close'].fillna(method='ffill')
+#     y = y.values.reshape(-1, 1)
 
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    scaler = scaler.fit(y)
-    y = scaler.transform(y)
+#     scaler = MinMaxScaler(feature_range=(0, 1))
+#     scaler = scaler.fit(y)
+#     y = scaler.transform(y)
 
-    n_lookback = 1
-    n_forecast = 7
+#     n_lookback = 1
+#     n_forecast = 7
 
-    X = []
-    Y = []
+#     X = []
+#     Y = []
 
-    for i in range(n_lookback, len(y) - n_forecast + 1):
-        X.append(y[i - n_lookback: i])
-        Y.append(y[i: i + n_forecast])
+#     for i in range(n_lookback, len(y) - n_forecast + 1):
+#         X.append(y[i - n_lookback: i])
+#         Y.append(y[i: i + n_forecast])
 
-    X = np.array(X)
-    Y = np.array(Y)
+#     X = np.array(X)
+#     Y = np.array(Y)
 
-    # model = load_model('stock_model/lstm_model.h5', compile = False)
-    # fit the model
-    model = Sequential()
-    model.add(LSTM(units=50, return_sequences=True, input_shape=(n_lookback, 1)))
-    model.add(LSTM(units=50))
-    model.add(Dense(n_forecast))
+#     # model = load_model('stock_model/lstm_model.h5', compile = False)
+#     # fit the model
+#     model = Sequential()
+#     model.add(LSTM(units=50, return_sequences=True, input_shape=(n_lookback, 1)))
+#     model.add(LSTM(units=50))
+#     model.add(Dense(n_forecast))
 
-    model.compile(loss='mean_squared_error', optimizer='adam')
-    model.fit(X, Y, epochs=100, batch_size=32, verbose=0)
+#     model.compile(loss='mean_squared_error', optimizer='adam')
+#     model.fit(X, Y, epochs=100, batch_size=32, verbose=0)
 
-    X_ = y[- n_lookback:]
-    X_ = X_.reshape(1, n_lookback, 1)
+#     X_ = y[- n_lookback:]
+#     X_ = X_.reshape(1, n_lookback, 1)
 
-    Y_ = model.predict(X_).reshape(-1, 1)
-    Y_ = scaler.inverse_transform(Y_)
+#     Y_ = model.predict(X_).reshape(-1, 1)
+#     Y_ = scaler.inverse_transform(Y_)
 
-    df_past = df[['Close']].reset_index()
-    df_past.rename(columns={'index': 'Date', 'Close': 'Actual'}, inplace=True)
-    df_past['Date'] = pd.to_datetime(df_past['Date'])
+#     df_past = df[['Close']].reset_index()
+#     df_past.rename(columns={'index': 'Date', 'Close': 'Actual'}, inplace=True)
+#     df_past['Date'] = pd.to_datetime(df_past['Date'])
 
-    df_future = pd.DataFrame(columns=['Date', 'Forecast'])
-    df_future['Date'] = pd.date_range(start=df_past['Date'].iloc[-1] + pd.Timedelta(days=1), periods=n_forecast)
-    df_future['Forecast'] = Y_.flatten()
-    df_future['Date'] = df_future['Date'].dt.strftime('%Y/%m/%d')
+#     df_future = pd.DataFrame(columns=['Date', 'Forecast'])
+#     df_future['Date'] = pd.date_range(start=df_past['Date'].iloc[-1] + pd.Timedelta(days=1), periods=n_forecast)
+#     df_future['Forecast'] = Y_.flatten()
+#     df_future['Date'] = df_future['Date'].dt.strftime('%Y/%m/%d')
 
-    return df_future
+#     return df_future
+
+def maPredict(df):
+    # 計算移動平均值
+    # ma_period = 7  # 你可以根據需要調整這個參數
+    # df['MA'] = df['Close'].rolling(window=ma_period).mean()
+
+    # 預測未來七天的資料
+    future_days = 7
+    # last_ma_value = df['MA'].iloc[-1]
+    # predicted_values = [last_ma_value] * future_days
+
+    # 將預測值添加到DataFrame
+    future_df = pd.DataFrame(columns=['Date', 'Forecast'])
+    future_df['Date'] = pd.date_range(start=df.index[-1] + pd.Timedelta(days=1), periods=future_days, freq='D')
+    # future_df['Forecast'] = predicted_values
+    # future_df['Date'] = future_df['Date'].dt.strftime('%Y/%m/%d')
+
+    # 使用迭代方式產生未來七天的預測值，以前三天的平均值為基準
+    for date in future_df['Date']:
+        last_three_days_avg = df['Close'][-7:].mean()
+        # df = df.append(pd.DataFrame({'Close': last_three_days_avg}, index=[date]))
+        df = pd.concat([df, pd.DataFrame({'Close': last_three_days_avg}, index=[date])])
+    future_df['Forecast'] = df['Close'][-7:].tolist()
+    future_df['Date'] = future_df['Date'].dt.strftime('%Y/%m/%d')
+
+    # 將原始數據和預測數據合併
+    # result_df = pd.concat([df, future_df])
+    
+    return future_df
 
 @api_view(['GET'])
 def stockChart(request):
@@ -267,7 +296,8 @@ def stockChart(request):
             close = dfNew['Close']
 
             if predict == "true":
-                df_future = lstmPredict(df)
+                # df_future = lstmPredict(df)
+                df_future = maPredict(df)
                 close = pd.concat([close, df_future['Forecast']], ignore_index=True)
                 date = pd.concat([date, df_future['Date']], ignore_index=True)
             data.append({"name": stock.Name, "date": date, "close": close})
@@ -278,7 +308,8 @@ def stockChart(request):
             close = dfNew['Close']
 
             if predict == "true":
-                df_future = lstmPredict(df)
+                # df_future = lstmPredict(df)
+                df_future = maPredict(df)
                 close = pd.concat([close, df_future['Forecast']], ignore_index=True)
                 date = pd.concat([date, df_future['Date']], ignore_index=True)
             data.append({"name": stock.Name, "date": date, "close": close})
