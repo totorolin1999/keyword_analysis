@@ -1,0 +1,4 @@
+/api/__pycache__
+/api/migrations/__pycache__
+/keyword_analysis_drf/__pycache__
+/keyword_analysis_drf/.env
