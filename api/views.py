@@ -166,10 +166,11 @@ def nationList(request):
     foreignQueryset = ForeignKeyword.objects.values_list("Name", flat=True)
     foreignList = list(foreignQueryset)
     commonWords = set(crawlerList) & set(foreignList)
-    if len(commonWords) > 4:
+    if len(commonWords) > 3:
         nations = Nation.objects.all().order_by('-Nation_ID').values()
     else:
         nations = Nation.objects.all().order_by('Nation_ID').values()
+    print(f"len(commonWords):{len(commonWords)}")
     nationOptions = []
     for nation in nations:
         nationOptions.append({"value": nation["Nation_ID"], "label": nation["Name"]})
