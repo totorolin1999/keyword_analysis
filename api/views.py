@@ -261,9 +261,9 @@ def maPredict(df):
     # future_df['Forecast'] = predicted_values
     # future_df['Date'] = future_df['Date'].dt.strftime('%Y/%m/%d')
 
-    # 使用迭代方式產生未來七天的預測值，以前三天的平均值為基準
+    # 使用迭代方式產生未來七天的預測值，以前14天的平均值為基準
     for date in future_df['Date']:
-        last_three_days_avg = df['Close'][-7:].mean()
+        last_three_days_avg = df['Close'][-14:].mean()
         # df = df.append(pd.DataFrame({'Close': last_three_days_avg}, index=[date]))
         df = pd.concat([df, pd.DataFrame({'Close': last_three_days_avg}, index=[date])])
     future_df['Forecast'] = df['Close'][-7:].tolist()
