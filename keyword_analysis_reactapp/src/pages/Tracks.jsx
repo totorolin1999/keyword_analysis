@@ -10,7 +10,7 @@ import Row from "react-bootstrap/Row";
 import ReactPaginate from "react-paginate";
 import "./pagination/pagination.scss";
 import Container from "react-bootstrap/Container";
-import API_BASE_URL from '../apiConfig';
+import API_BASE_URL from "../apiConfig";
 
 const Tracks = () => {
   const [tracks, setTracks] = useState([]);
@@ -19,7 +19,7 @@ const Tracks = () => {
   const [itemOffset, setItemOffset] = useState(0);
   const itemsPerPage = 3;
 
-  const [imageSrc, setImageSrc] = useState('');
+  const [imageSrc, setImageSrc] = useState("");
 
   let api = useAxios();
 
@@ -32,7 +32,7 @@ const Tracks = () => {
         console.log(err);
       }
     };
-    setImageSrc(`${API_BASE_URL}/media/image1.svg`);
+    setImageSrc(`${API_BASE_URL}/media/image2.svg`);
     fetchAllTracks();
   }, []);
 
@@ -114,16 +114,22 @@ const Tracks = () => {
           </div>
         ) : (
           <Row className="justify-content-md-center">
-            <Card style={{ width: "23rem" }}>
-              <Card.Body>
-                <Card.Title>Card Title</Card.Title>
-                <Card.Text>
-                  Some quick example text to build on the card title and make up
-                  the bulk of the card's content.
-                </Card.Text>
-                {/* <Button variant="primary">Go somewhere</Button> */}
-              </Card.Body>
+            <Card
+              bg="success"
+              text="white"
+              style={{ width: "28rem" }}
+              className="my-5"
+            >
               <Card.Img variant="top" src={imageSrc} />
+              <Card.Body>
+                <Card.Title>系統提醒</Card.Title>
+                <Card.Text>
+                  您目前並沒有任何追蹤資訊，趕快前往首頁尋找感興趣的關鍵字吧！
+                </Card.Text>
+                <Button variant="primary" as={Link} to="/">
+                  首頁
+                </Button>
+              </Card.Body>
             </Card>
           </Row>
         )}

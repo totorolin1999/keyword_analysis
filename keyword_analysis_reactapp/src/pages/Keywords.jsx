@@ -17,7 +17,7 @@ import Spinner from "react-bootstrap/Spinner";
 import Container from "react-bootstrap/Container";
 import Card from "react-bootstrap/Card";
 import AuthContext from "../context/AuthContext";
-import API_BASE_URL from '../apiConfig';
+import API_BASE_URL from "../apiConfig";
 
 const Keywords = () => {
   const [keywords, setKeywords] = useState([]);
@@ -38,6 +38,7 @@ const Keywords = () => {
   // const navigate = useNavigate();
 
   const [btnDisabled, setbtnDisabled] = useState(true);
+  const [btn2Disabled, setbtn2Disabled] = useState(true);
   const [nationLoading, setNationLoading] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(false);
 
@@ -46,7 +47,7 @@ const Keywords = () => {
   const [showSpinner2, setShowSpinner2] = useState(false);
   const [showBtn, setShowBtn] = useState(false);
 
-  const [imageSrc, setImageSrc] = useState('');
+  const [imageSrc, setImageSrc] = useState("");
 
   let api = useAxios();
 
@@ -106,6 +107,8 @@ const Keywords = () => {
   };
 
   const handleSelect = () => {
+    setbtnDisabled(true);
+    setbtn2Disabled(true);
     setShowSpinner(true);
     setStockData(null);
     setStockData1(null);
@@ -172,6 +175,8 @@ const Keywords = () => {
         }
       }
       setShowSpinner(false);
+      setbtnDisabled(false);
+      setbtn2Disabled(false);
       setShow(false);
       setShowBtn(true);
     };
@@ -203,6 +208,7 @@ const Keywords = () => {
 
   const predictClick = async (e) => {
     e.preventDefault();
+    setbtn2Disabled(true);
     setShowSpinner2(true);
     setStockData(null);
     setStockData1(null);
@@ -272,6 +278,7 @@ const Keywords = () => {
           }
         }
         setShowSpinner2(false);
+        setbtn2Disabled(false);
       };
       fetchStockData();
     } catch (err) {
@@ -338,17 +345,34 @@ const Keywords = () => {
         </div>
       ) : (
         <Row className="justify-content-md-center">
-          <Card style={{ width: "23rem" }}>
-            <Card.Body>
-              <Card.Title>Card Title</Card.Title>
-              <Card.Text>
-                Some quick example text to build on the card title and make up
-                the bulk of the card's content.
-              </Card.Text>
-              {/* <Button variant="primary">Go somewhere</Button> */}
-            </Card.Body>
-            <Card.Img variant="top" src={imageSrc} />
-          </Card>
+          {showSpinner || showSpinner2 ? (
+            <Card style={{ width: "28rem" }}>
+              <Card.Img variant="top" src={imageSrc} />
+              <Card.Body>
+                <Card.Title>資料載入中，請稍後！</Card.Title>
+                <Spinner animation="border" />
+                {/* <Card.Text>
+                  Some quick example text to build on the card title and make up
+                  the bulk of the card's content.
+                </Card.Text> */}
+              </Card.Body>
+            </Card>
+          ) : (
+            <Card
+              bg="success"
+              text="white"
+              style={{ width: "28rem" }}
+              className="my-5"
+            >
+              <Card.Header>系統介紹</Card.Header>
+              <Card.Body>
+                <Card.Title>網路熱搜字的股市熱度觀察系統</Card.Title>
+                <Card.Text>
+                  本系統是基於網路關鍵字和類股的結合，以Web開發、網路爬蟲、資料分析、資料視覺化等技術建置而成，使用者可以透過平台即時掌握網路搜尋趨勢，並選擇欲關注的熱搜字。接著，系統會按照使用者選取的關鍵字，經由資料分析後，依各產業受該關鍵字影響之程度排序，提供使用者選擇。使用者選取欲關注的產業後，平台將會藉由資料視覺化呈現該關鍵字下特定產業的類股指數、龍頭股價格等，以及利用時間序列預測方法預測未來走勢，藉此讓使用者觀察關鍵字與產業之間的關聯性，並且判斷產業將來走向。同時，系統也會分析該關鍵字所適合關注的股市類別，使用者可依系統推薦或是自身目的如投資參考，選擇關注台股或是美股，觀察國內產業抑或國際產業所受的影響。使用者可以在平台上儲存其搜尋資訊，日後查看關鍵字下的產業變化、更新預測資訊，以及持續追蹤後續發展。
+                </Card.Text>
+              </Card.Body>
+            </Card>
+          )}
         </Row>
       )}
       {stockData1 ? (
@@ -368,13 +392,13 @@ const Keywords = () => {
       {showBtn ? (
         <div className="my-4 text-center">
           {user ? (
-            <Button variant="success" onClick={handleClick}>
+            <Button variant="success" disabled={btn2Disabled} onClick={handleClick}>
               持續追蹤
             </Button>
           ) : (
             <></>
           )}
-          <Button variant="outline-success" onClick={predictClick}>
+          <Button variant="outline-success" disabled={btn2Disabled} onClick={predictClick}>
             預測股價
             {showSpinner2 ? (
               <Spinner
