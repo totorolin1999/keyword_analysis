@@ -23,6 +23,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('', views.index, name='index'),
+    path('Login', views.index, name='index'),
+    path('Register', views.index, name='index'),
+    path('Tracks', views.index, name='index'),
+    path('Track/<str:pk>', views.index_pk, name='index_pk'),
     re_path(r'^media/(?P<path>.*)$', serve,{'document_root':settings.MEDIA_ROOT}),
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root':settings.STATIC_ROOT}),
 ]
