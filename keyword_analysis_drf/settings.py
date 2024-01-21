@@ -33,12 +33,10 @@ environ.Env.read_env()
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = 'django-insecure-5jl@83-g6yx)n*&#ys@m#d0g5&u6^)=@6d1m&4p^=kosuq_ytw'
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
-DEBUG = False
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # ALLOWED_HOSTS = []
 ALLOWED_HOSTS = ['*']
@@ -148,24 +146,25 @@ WSGI_APPLICATION = 'keyword_analysis_drf.wsgi.application'
 #     }
 # }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': env('PostgreSQL_NAME'),
-#         'USER': env('PostgreSQL_USER'),
-#         'PASSWORD': env('PostgreSQL_PASSWORD'),
-#         'HOST': env('PostgreSQL_HOST'),
-#         'PORT': env('PostgreSQL_PORT'),
-#     }
-# }
+# For Server
+DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
-# Render PostgreSQL (Live)
-
-DATABASES = {
-
-    'default': dj_database_url.parse(env('DATABASE_URL'))
-
-}
+if DEVELOPMENT_MODE is True:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('PostgreSQL_NAME'),
+            'USER': env('PostgreSQL_USER'),
+            'PASSWORD': env('PostgreSQL_PASSWORD'),
+            'HOST': env('PostgreSQL_HOST'),
+            'PORT': env('PostgreSQL_PORT'),
+        }
+    }
+else:
+    # Render PostgreSQL (Live)
+    DATABASES = {
+        "default": dj_database_url.parse(env('DATABASE_URL'))
+    }
 
 
 # Password validation
