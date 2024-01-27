@@ -10,6 +10,7 @@ import TrackChart from "../components/TrackChart";
 import Button from "react-bootstrap/Button";
 import Alert from "react-bootstrap/Alert";
 import Spinner from "react-bootstrap/Spinner";
+import Container from "react-bootstrap/Container";
 import API_BASE_URL from '../apiConfig';
 
 const Track = () => {
@@ -164,7 +165,7 @@ const Track = () => {
 
   //   console.log(track);
   return (
-    <div className="p-5">
+    <Container className="py-5">
       <Alert show={show} variant="success">
         <Alert.Heading>關鍵字：{track.Keyword}</Alert.Heading>
         <p>
@@ -243,7 +244,7 @@ const Track = () => {
       ) : (
         <div></div>
       )}
-    </div>
+    </Container>
   );
 };
 

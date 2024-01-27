@@ -368,7 +368,7 @@ const Keywords = () => {
               <Card.Body>
                 <Card.Title>網路熱搜字的股市熱度觀察系統</Card.Title>
                 <Card.Text>
-                  本系統是基於網路關鍵字和類股的結合，以Web開發、網路爬蟲、資料分析、資料視覺化等技術建置而成，使用者可以透過平台即時掌握網路搜尋趨勢，並選擇欲關注的熱搜字。接著，系統會按照使用者選取的關鍵字，經由資料分析後，依各產業受該關鍵字影響之程度排序，提供使用者選擇。使用者選取欲關注的產業後，平台將會藉由資料視覺化呈現該關鍵字下特定產業的類股指數、龍頭股價格等，以及利用時間序列預測方法預測未來走勢，藉此讓使用者觀察關鍵字與產業之間的關聯性，並且判斷產業將來走向。同時，系統也會分析該關鍵字所適合關注的股市類別，使用者可依系統推薦或是自身目的如投資參考，選擇關注台股或是美股，觀察國內產業抑或國際產業所受的影響。使用者可以在平台上儲存其搜尋資訊，日後查看關鍵字下的產業變化、更新預測資訊，以及持續追蹤後續發展。
+                  本系統是基於網路關鍵字和類股的結合，以Web開發、網路爬蟲、資料分析、資料視覺化等技術建置而成，使用者可以透過平台即時掌握網路搜尋趨勢，並選擇欲關注的熱搜字。系統會按照使用者選取的關鍵字，分析該關鍵字所適合關注的股市類別，使用者可依系統推薦或是自身目的如投資參考，選擇關注台股或是美股，觀察國內產業抑或國際產業所受的影響。當使用者選擇關注台股或美股後，系統會經由資料分析，依該股市類別下各產業受該關鍵字影響之程度排序，提供使用者選擇。使用者選取欲關注的產業後，平台將會藉由資料視覺化呈現該關鍵字下特定產業的龍頭股價格，以及利用時間序列預測方法預測未來走勢，藉此讓使用者觀察關鍵字與產業之間的關聯性，並且判斷產業將來走向。使用者可以在平台上儲存其搜尋資訊，日後查看關鍵字下的產業變化、更新預測資訊，以及持續追蹤後續發展。
                 </Card.Text>
               </Card.Body>
             </Card>
@@ -392,13 +392,21 @@ const Keywords = () => {
       {showBtn ? (
         <div className="my-4 text-center">
           {user ? (
-            <Button variant="success" disabled={btn2Disabled} onClick={handleClick}>
+            <Button
+              variant="success"
+              disabled={btn2Disabled}
+              onClick={handleClick}
+            >
               持續追蹤
             </Button>
           ) : (
             <></>
           )}
-          <Button variant="outline-success" disabled={btn2Disabled} onClick={predictClick}>
+          <Button
+            variant="outline-success"
+            disabled={btn2Disabled}
+            onClick={predictClick}
+          >
             預測股價
             {showSpinner2 ? (
               <Spinner
