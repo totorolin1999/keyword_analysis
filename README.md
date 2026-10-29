@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Bootstrap-5-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white" alt="Bootstrap" />
   <img src="https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white" alt="Chart.js" />
+  <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License: MIT" />
 </p>
 
 一套結合 **Google Trends 即時搜尋趨勢**、**網路新聞爬蟲**、**Jieba 中文斷詞語意分析** 與 **Yahoo Finance 即時金融數據** 的全端概念股關聯與走勢預測系統。
@@ -26,6 +27,7 @@
 - [環境變數設定 (.env)](#-環境變數設定-env)
 - [安全性與效能優化重點](#-安全性與效能優化重點-security--performance)
 - [貢獻與反饋](#-貢獻與反饋-contributing)
+- [授權條款 (License)](#-授權條款-license)
 
 ---
 
@@ -267,3 +269,10 @@ REACT_APP_APP_URL=http://127.0.0.1:8000
 
 歡迎提交 Issue 與 Pull Request 一同完善此專案！
 如有任何疑問或建議，歡迎透過 GitHub Issue 聯繫討論。
+
+---
+
+## 📄 授權條款 (License)
+
+本專案基於 [MIT License](LICENSE) 條款開放原始碼。
+
