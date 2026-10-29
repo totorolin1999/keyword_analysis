@@ -65,7 +65,7 @@ flowchart TD
     G -->|JSON 資料格式| H[React 前端 SPA 介面]
     H -->|Chart.js 動態繪圖| I[互動式股票走勢圖]
     
-    subgraph 會員追蹤系統 (IDOR 防護)
+    subgraph MemberSystem ["會員追蹤系統 (IDOR 防護)"]
         U[用戶登入 / JWT 認證] -->|加入追蹤標的| T[自訂追蹤清單 Tracks]
         T -->|每日進展追蹤點| I
     end
