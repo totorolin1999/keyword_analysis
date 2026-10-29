@@ -26,7 +26,6 @@
 - [API 規格一覽 (RESTful APIs)](#-api-規格一覽-restful-apis)
 - [環境變數設定 (.env)](#-環境變數設定-env)
 - [安全性與效能優化重點](#-安全性與效能優化重點-security--performance)
-- [貢獻與反饋](#-貢獻與反饋-contributing)
 - [授權條款 (License)](#-授權條款-license)
 
 ---
@@ -262,13 +261,6 @@ REACT_APP_APP_URL=http://127.0.0.1:8000
 - **爬蟲防阻塞與快取 (TTL Cache & Timeout)**：針對 Google Trends API 與新聞爬取設置連線逾時保護，並引入記憶體快取避免短時間內重複爬取導致 IP 被 Google 限流。
 - **金融數據容錯機制**：針對休市日、無交易數據或 yfinance MultiIndex 返回格式進行強健容錯，確保股價圖表與預測 API 永不因單一個股無資料而崩潰。
 - **SPA 響應式使用者體驗**：前端移除整頁強制重新整理（`window.location.reload`），改採 React 狀態更新，並將重複的圖表代碼重構為陣列動態渲染。
-
----
-
-## 🤝 貢獻與反饋 (Contributing)
-
-歡迎提交 Issue 與 Pull Request 一同完善此專案！
-如有任何疑問或建議，歡迎透過 GitHub Issue 聯繫討論。
 
 ---
 
