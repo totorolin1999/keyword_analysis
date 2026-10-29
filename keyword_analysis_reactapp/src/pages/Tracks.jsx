@@ -2,12 +2,10 @@ import useAxios from "../utils/useAxios";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "react-bootstrap/Button";
-import Card from "react-bootstrap/Card";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Spinner from "react-bootstrap/Spinner";
 import ReactPaginate from "react-paginate";
-import "./pagination/pagination.scss";
 import Container from "react-bootstrap/Container";
 import API_BASE_URL from "../apiConfig";
 
@@ -17,9 +15,8 @@ const Tracks = () => {
   const [currentItems, setCurrentItems] = useState([]);
   const [pageCount, setPageCount] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
-  const itemsPerPage = 3;
+  const itemsPerPage = 6;
 
-  const imageSrc = `${API_BASE_URL}/media/image2.svg`;
   const api = useAxios();
 
   const fetchAllTracks = async () => {
@@ -36,6 +33,7 @@ const Tracks = () => {
 
   useEffect(() => {
     fetchAllTracks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -56,7 +54,6 @@ const Tracks = () => {
     }
     try {
       await api.delete(`${API_BASE_URL}/api/track-delete/${id}/`);
-      // 以 React State 更新，不強制 reload 頁面
       setTracks((prevTracks) => prevTracks.filter((track) => track.Track_ID !== id));
     } catch (err) {
       console.error("刪除失敗:", err);
@@ -67,103 +64,135 @@ const Tracks = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <Spinner animation="border" variant="success" />
-        <p className="mt-3 text-muted">正在載入您的追蹤清單...</p>
+        <div className="py-5">
+          <Spinner animation="border" variant="success" style={{ width: "3rem", height: "3rem" }} />
+          <h5 className="mt-3 text-dark fw-bold">載入追蹤清單中...</h5>
+          <p className="text-muted small">正在檢索您的個人投資關注項目</p>
+        </div>
       </Container>
     );
   }
 
   return (
-    <div className="backgroundColor">
-      <Container className="py-5">
-        {tracks.length > 0 ? (
-          <div>
-            <Row xs={1} md={3} className="g-4 my-md-5">
-              {currentItems.map((track) => (
-                <Col key={track.Track_ID}>
-                  <Card border="light" bg="dark" text="white" className="h-100 shadow-sm">
-                    <Card.Body className="d-flex flex-column">
-                      <Card.Title className="border-bottom pb-2 text-success fw-bold">
-                        {track.Keyword}
-                      </Card.Title>
-                      <Card.Text className="mb-2">
-                        <strong className="text-light">關聯產業：</strong><br />
-                        {track.Industries?.map((industry, index) => (
-                          <span key={index} className="badge bg-secondary me-1 mt-1">
-                            {industry.Name}
-                          </span>
-                        ))}
-                      </Card.Text>
-                      <Card.Text className="mt-auto mb-3">
-                        <small className="text-muted">追蹤紀錄點：</small><br />
-                        {track.Times?.map((time, index) => (
-                          <span key={index} className="badge bg-dark border me-1 mt-1">
-                            {time.Date}
-                          </span>
-                        ))}
-                      </Card.Text>
-                      <div className="d-flex justify-content-between mt-2">
-                        <Button
-                          variant="success"
-                          as={Link}
-                          to={`/Track/${track.Track_ID}`}
-                          size="sm"
-                        >
-                          查看股價走勢
-                        </Button>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={() => handleDelete(track.Track_ID)}
-                        >
-                          刪除
-                        </Button>
+    <Container className="py-5">
+      {/* Header Bar */}
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center pb-4 mb-4 border-bottom">
+        <div>
+          <h2 className="fw-bold text-dark mb-1">⭐ 我的追蹤清單</h2>
+          <p className="text-muted mb-0">
+            觀測您所收藏的熱搜概念股標的，點擊即可追蹤跨時間序列的股價變化。共{" "}
+            <strong>{tracks.length}</strong> 個項目
+          </p>
+        </div>
+        <div className="mt-3 mt-md-0">
+          <Button as={Link} to="/" className="btn-trend-primary" size="sm">
+            ➕ 探索新話題
+          </Button>
+        </div>
+      </div>
+
+      {tracks.length > 0 ? (
+        <div>
+          <Row xs={1} md={2} lg={3} className="g-4">
+            {currentItems.map((track) => (
+              <Col key={track.Track_ID}>
+                <div className="trend-track-card">
+                  <div className="card-header-custom d-flex justify-content-between align-items-center">
+                    <h5 className="keyword-title">
+                      🎯 {track.Keyword}
+                    </h5>
+                    <span className="badge bg-light text-secondary border">
+                      #{track.Track_ID}
+                    </span>
+                  </div>
+
+                  <div className="card-body-custom">
+                    <div className="mb-3">
+                      <div className="section-subtitle">關聯產業標的</div>
+                      <div>
+                        {track.Industries && track.Industries.length > 0 ? (
+                          track.Industries.map((industry, index) => (
+                            <span key={index} className="badge-chip">
+                              {industry.Name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-muted small">暫無產業關聯</span>
+                        )}
                       </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-            {pageCount > 1 && (
-              <ReactPaginate
-                breakLabel="..."
-                nextLabel="下一頁 >"
-                onPageChange={handlePageClick}
-                pageRangeDisplayed={3}
-                pageCount={pageCount}
-                previousLabel="< 上一頁"
-                renderOnZeroPageCount={null}
-                containerClassName="pagination justify-content-center"
-                pageLinkClassName="page-num"
-                previousLinkClassName="page-num"
-                nextLinkClassName="page-num"
-                activeLinkClassName="active"
-              />
-            )}
-          </div>
-        ) : (
-          <Row className="justify-content-md-center">
-            <Card
-              bg="success"
-              text="white"
-              style={{ width: "28rem" }}
-              className="my-5 text-center shadow"
-            >
-              <Card.Img variant="top" src={imageSrc} />
-              <Card.Body>
-                <Card.Title className="fw-bold">目前無追蹤紀錄</Card.Title>
-                <Card.Text>
-                  您目前並沒有任何追蹤資訊，趕快前往首頁探索熱門關鍵字與概念股吧！
-                </Card.Text>
-                <Button variant="light" as={Link} to="/" className="text-success fw-bold">
-                  前往探索
-                </Button>
-              </Card.Body>
-            </Card>
+                    </div>
+
+                    <div>
+                      <div className="section-subtitle">追蹤打卡紀錄點</div>
+                      <div>
+                        {track.Times && track.Times.length > 0 ? (
+                          track.Times.map((time, index) => (
+                            <span key={index} className="date-chip">
+                              📅 {time.Date}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-muted small">尚無紀錄</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card-footer-custom">
+                    <Button
+                      variant="success"
+                      as={Link}
+                      to={`/Track/${track.Track_ID}`}
+                      size="sm"
+                      className="btn-trend-primary py-1 px-3"
+                      style={{ fontSize: "0.85rem" }}
+                    >
+                      查看股價走勢 &rarr;
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleDelete(track.Track_ID)}
+                      style={{ borderRadius: "8px", fontSize: "0.82rem" }}
+                    >
+                      刪除
+                    </Button>
+                  </div>
+                </div>
+              </Col>
+            ))}
           </Row>
-        )}
-      </Container>
-    </div>
+
+          {pageCount > 1 && (
+            <ReactPaginate
+              breakLabel="..."
+              nextLabel="下一頁 &rarr;"
+              onPageChange={handlePageClick}
+              pageRangeDisplayed={3}
+              pageCount={pageCount}
+              previousLabel="&larr; 上一頁"
+              renderOnZeroPageCount={null}
+              containerClassName="pagination justify-content-center"
+              pageLinkClassName="page-num"
+              previousLinkClassName="page-num"
+              nextLinkClassName="page-num"
+              activeLinkClassName="active"
+            />
+          )}
+        </div>
+      ) : (
+        <div className="text-center py-5 bg-white rounded-3 border shadow-sm my-4 p-5">
+          <div style={{ fontSize: "3.5rem" }} className="mb-3">📋</div>
+          <h4 className="fw-bold text-dark">目前尚無追蹤紀錄</h4>
+          <p className="text-muted mb-4 mx-auto" style={{ maxWidth: "450px" }}>
+            您目前還沒有建立任何概念股追蹤！前往首頁探索最受關注的熱門關鍵字與龍頭概念股，一鍵加入自訂清單。
+          </p>
+          <Button as={Link} to="/" className="btn-trend-primary">
+            立即前往首頁探索 📈
+          </Button>
+        </div>
+      )}
+    </Container>
   );
 };
 

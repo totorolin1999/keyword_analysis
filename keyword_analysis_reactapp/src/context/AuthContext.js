@@ -28,7 +28,6 @@ export const AuthProvider = ({ children }) => {
 
   const [authTokens, setAuthTokens] = useState(getInitialTokens);
   const [user, setUser] = useState(getInitialUser);
-  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -123,7 +122,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={contextData}>
-      {loading ? null : children}
+      {children}
     </AuthContext.Provider>
   );
 };

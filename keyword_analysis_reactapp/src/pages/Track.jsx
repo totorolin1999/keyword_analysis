@@ -4,17 +4,19 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import TrackChart from "../components/TrackChart";
 import Button from "react-bootstrap/Button";
-import Alert from "react-bootstrap/Alert";
 import Spinner from "react-bootstrap/Spinner";
 import Container from "react-bootstrap/Container";
-import API_BASE_URL from '../apiConfig';
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Alert from "react-bootstrap/Alert";
+import API_BASE_URL from "../apiConfig";
 
 const CHART_COLORS = [
-  { border: "rgba(54, 162, 235, 1)", bg: "rgba(54, 162, 235, 0.2)" },
-  { border: "rgba(255, 99, 132, 1)", bg: "rgba(255, 99, 132, 0.2)" },
-  { border: "rgba(75, 192, 192, 1)", bg: "rgba(75, 192, 192, 0.2)" },
-  { border: "rgba(255, 159, 64, 1)", bg: "rgba(255, 159, 64, 0.2)" },
-  { border: "rgba(153, 102, 255, 1)", bg: "rgba(153, 102, 255, 0.2)" },
+  { border: "rgba(16, 185, 129, 1)", bg: "rgba(16, 185, 129, 0.15)" },
+  { border: "rgba(59, 130, 246, 1)", bg: "rgba(59, 130, 246, 0.15)" },
+  { border: "rgba(249, 115, 22, 1)", bg: "rgba(249, 115, 22, 0.15)" },
+  { border: "rgba(168, 85, 247, 1)", bg: "rgba(168, 85, 247, 0.15)" },
+  { border: "rgba(236, 72, 153, 1)", bg: "rgba(236, 72, 153, 0.15)" },
 ];
 
 const Track = () => {
@@ -30,9 +32,9 @@ const Track = () => {
 
   const [stockCharts, setStockCharts] = useState([]);
   const [predict, setPredict] = useState(false);
-  const [showInfo, setShowInfo] = useState(true);
   const [showSpinner, setShowSpinner] = useState(false);
   const [isUpdatingTrack, setIsUpdatingTrack] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState("");
 
   const api = useAxios();
 
@@ -65,9 +67,13 @@ const Track = () => {
                     data: item.close,
                     borderColor: color.border,
                     backgroundColor: color.bg,
+                    borderWidth: 2,
+                    pointRadius: 2.5,
+                    pointHoverRadius: 5,
+                    tension: 0.2,
                   };
                 }),
-              }
+              },
             });
           }
         } catch (chartErr) {
@@ -86,6 +92,7 @@ const Track = () => {
     if (trackId) {
       fetchTrackData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackId, predict]);
 
   const handleTrackTimeUpdate = async (e) => {
@@ -93,8 +100,7 @@ const Track = () => {
     setIsUpdatingTrack(true);
     try {
       const res = await api.post(`${API_BASE_URL}/api/track-time-create/${trackId}/`);
-      alert(res.data.Message || "追蹤紀錄已更新！");
-      // 更新本機狀態，避免整頁重新整理
+      setFeedbackMsg(res.data.Message || "追蹤打卡紀錄已成功更新！");
       setTrack(res.data);
     } catch (err) {
       console.error("更新追蹤失敗:", err);
@@ -106,76 +112,120 @@ const Track = () => {
 
   return (
     <Container className="py-5">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <Link to="/Tracks" className="btn btn-outline-secondary btn-sm">
-          &larr; 返回所有追蹤
+      {/* Navigation & Header */}
+      <div className="mb-4">
+        <Link to="/Tracks" className="btn btn-outline-secondary btn-sm mb-3" style={{ borderRadius: "8px" }}>
+          &larr; 返回追蹤清單
         </Link>
-        {!showInfo && (
-          <Button onClick={() => setShowInfo(true)} variant="success" size="sm">
-            顯示追蹤資訊
-          </Button>
-        )}
       </div>
 
-      <Alert show={showInfo} variant="success">
-        <Alert.Heading>關注熱搜字：{track.Keyword}</Alert.Heading>
-        <div className="mb-2">
-          <strong>關聯產業：</strong>
-          {track.Industries?.map((industry, index) => (
-            <span key={index} className="badge bg-success me-1">
-              {industry.Name}
-            </span>
-          ))}
-        </div>
-        <div>
-          <strong>追蹤時間序列：</strong>
-          {track.Times?.map((time, index) => (
-            <span key={index} className="badge bg-secondary me-1">
-              {time.Date}
-            </span>
-          ))}
-        </div>
-        <hr />
-        <div className="d-flex justify-content-end">
-          <Button onClick={() => setShowInfo(false)} variant="outline-success" size="sm">
-            關閉資訊面板
-          </Button>
-        </div>
-      </Alert>
+      {/* Info Header Card */}
+      <div className="bg-white rounded-3 border p-4 shadow-sm mb-4">
+        <Row className="align-items-center">
+          <Col md={7}>
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                熱搜追蹤標的
+              </span>
+              <span className="text-muted small">ID: #{track.Track_ID}</span>
+            </div>
+            <h2 className="fw-bold text-dark mb-3">🎯 {track.Keyword}</h2>
 
+            <div className="mb-2">
+              <span className="text-muted small fw-bold me-2">關聯產業：</span>
+              {track.Industries && track.Industries.length > 0 ? (
+                track.Industries.map((industry, index) => (
+                  <span key={index} className="badge bg-light text-dark border me-1">
+                    {industry.Name}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted small">無</span>
+              )}
+            </div>
+
+            <div>
+              <span className="text-muted small fw-bold me-2">追蹤打卡點：</span>
+              {track.Times && track.Times.length > 0 ? (
+                track.Times.map((time, index) => (
+                  <span key={index} className="badge bg-success-subtle text-success border border-success-subtle me-1">
+                    📅 {time.Date}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted small">尚無紀錄</span>
+              )}
+            </div>
+          </Col>
+
+          <Col md={5} className="mt-3 mt-md-0 d-flex flex-column align-items-md-end gap-2">
+            <Button
+              className="btn-trend-primary w-100 w-md-auto"
+              onClick={handleTrackTimeUpdate}
+              disabled={isUpdatingTrack}
+              size="sm"
+            >
+              {isUpdatingTrack ? (
+                <>
+                  <Spinner animation="border" size="sm" className="me-1" />
+                  <span>記錄中...</span>
+                </>
+              ) : (
+                <>
+                  <span>➕ 新增今日打卡紀錄點</span>
+                </>
+              )}
+            </Button>
+
+            <Button
+              className={predict ? "btn-trend-outline w-100 w-md-auto" : "btn btn-outline-secondary w-100 w-md-auto"}
+              onClick={() => setPredict(!predict)}
+              size="sm"
+              style={{ borderRadius: "10px" }}
+            >
+              {predict ? "📊 顯示原始走勢" : "🔮 進行未來走勢預測"}
+            </Button>
+          </Col>
+        </Row>
+      </div>
+
+      {feedbackMsg && (
+        <Alert
+          variant="info"
+          onClose={() => setFeedbackMsg("")}
+          dismissible
+          className="shadow-sm border-0 mb-4"
+        >
+          {feedbackMsg}
+        </Alert>
+      )}
+
+      {/* Chart Section */}
       {showSpinner ? (
-        <div className="text-center py-5">
-          <Spinner animation="border" variant="success" />
-          <p className="mt-3 text-muted">正在繪製股價與走勢預測圖表...</p>
+        <div className="text-center py-5 bg-white rounded-3 border shadow-sm my-4">
+          <Spinner animation="border" variant="success" style={{ width: "3rem", height: "3rem" }} />
+          <h5 className="mt-3 text-dark fw-bold">正在繪製走勢圖表...</h5>
+          <p className="text-muted small">檢索時間序列數據與產業龍頭股報價</p>
         </div>
       ) : stockCharts.length > 0 ? (
         stockCharts.map((item, idx) => (
-          <div key={idx} className={idx > 0 ? "mt-5" : "mt-4"}>
-            <h5 className="text-muted mb-3">產業標的：{item.categoryName}</h5>
+          <div key={idx} className="chart-card">
+            <div className="chart-header">
+              <h3 className="category-title">
+                <span style={{ color: "#10b981" }}>●</span>
+                產業標的：{item.categoryName}
+              </h3>
+              <span className="category-tag">
+                {item.chartData.datasets.length} 檔龍頭概念股
+              </span>
+            </div>
             <TrackChart chartData={item.chartData} trackData={track} />
           </div>
         ))
       ) : (
-        <Alert variant="warning">此追蹤項目目前尚無足夠的歷史股價資料。</Alert>
-      )}
-
-      {stockCharts.length > 0 && !showSpinner && (
-        <div className="my-5 text-center">
-          <Button
-            variant="success"
-            onClick={handleTrackTimeUpdate}
-            disabled={isUpdatingTrack}
-            className="me-2"
-          >
-            {isUpdatingTrack ? "記錄中..." : "新增今日追蹤點"}
-          </Button>
-          <Button
-            variant={predict ? "secondary" : "outline-success"}
-            onClick={() => setPredict(!predict)}
-          >
-            {predict ? "顯示原始走勢" : "進行股價走勢預測"}
-          </Button>
-        </div>
+        <Alert variant="warning" className="shadow-sm">
+          ⚠️ 此追蹤項目目前尚無足夠的歷史股價資料。
+        </Alert>
       )}
     </Container>
   );
