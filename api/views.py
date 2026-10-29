@@ -5,6 +5,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import TrackSerializer, TimeSerializer, UserSerializer
 from rest_framework import status
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
 from .models import Industry, IndustryKeyword, Stock, Time, Track, Nation, ForeignKeyword
 import re
 import json
@@ -12,37 +14,40 @@ import requests
 import pandas as pd
 import datetime
 import urllib.request as req
+import urllib.error
 import jieba
 import yfinance as yf
 import time
-# import pyodbc
-# import numpy as np
-# from sklearn.preprocessing import MinMaxScaler
-# from keras.models import load_model
-# from tensorflow.keras.layers import Dense, LSTM
-# from tensorflow.keras.models import Sequential
-# Create your views here.
+
+# 記憶體快取，降低爬蟲延遲與被封鎖風險
+_TRENDS_CACHE = {"timestamp": 0, "keywords": [], "dataTitle": [], "dataArticles": []}
+_KEYWORD_WORDS_CACHE = {}  # {keyword: {"words": [...], "timestamp": float}}
+CACHE_TTL_SECONDS = 300  # 快取 5 分鐘
 
 @api_view(['POST'])
 def register_user(request):
-    if request.method == 'POST':
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    username = request.data.get('username')
+    email = request.data.get('email')
+    password = request.data.get('password')
+
+    if not username or not password:
+        return Response({'error': '請提供使用者名稱與密碼'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if User.objects.filter(username=username).exists():
+        return Response({'error': '該使用者名稱已被使用'}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-
-        # Add custom claims
         token['username'] = user.username
-        # ...
-
         return token
-
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -50,278 +55,226 @@ class MyTokenObtainPairView(TokenObtainPairView):
 @api_view(['GET'])
 def apiOverview(request):
     api_urls = {
-        'Token': '/api/token',
-        'Refresh': '/api/token/refresh',
-        'keywordList': '/keyword-list/',
-        'categoryList': '/category-list/',
+        'Token': '/api/token/',
+        'Refresh': '/api/token/refresh/',
+        'keywordList': '/api/keyword-list/',
+        'nationList': '/api/nation-list/',
+        'categoryList': '/api/category-list/',
+        'stockChart': '/api/stock-chart/',
+        'trackList': '/api/track-list/',
     }
     return Response(api_urls)
 
-@api_view(['GET'])
-def keywordList(request):
+def _get_google_trends():
+    global _TRENDS_CACHE
+    now = time.time()
+    if now - _TRENDS_CACHE["timestamp"] < CACHE_TTL_SECONDS and _TRENDS_CACHE["keywords"]:
+        return _TRENDS_CACHE["keywords"], _TRENDS_CACHE["dataTitle"], _TRENDS_CACHE["dataArticles"]
+
     header = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
     }
-    # url="https://trends.google.com.tw/trends/api/dailytrends?hl=zh-TW&tz=-480&ed=20220926&geo=TW&ns=15"
-    # resp = requests.get(url,headers=header)
-    # resp.text
-
-    # pd.DataFrame(json.loads(re.sub(r'\)\]\}\',\n', '', resp.text))['default']['trendingSearchesDays'][0]['trendingSearches'])
-
     enddt = datetime.datetime.today()
     startdt = enddt - datetime.timedelta(days=1)
-    # enddt = datetime.datetime.today() - datetime.timedelta(days=1)
-    # startdt = datetime.datetime.today()
-    df = []
-    for i in pd.date_range(start=datetime.datetime.strftime(startdt,'%Y%m%d'), end=datetime.datetime.strftime(enddt,'%Y%m%d'), freq='1D'):
-        url = 'https://trends.google.com.tw/trends/api/dailytrends?hl=zh-TW&tz=-480&ed={}&geo=TW&ns=15'.format(datetime.datetime.strftime(i, '%Y%m%d'))
-        print(url)
-        resp = requests.get(url,headers=header)
-        ndf=[]
-        ndf = pd.DataFrame(json.loads(re.sub(r'\)\]\}\',\n', '', resp.text))['default']['trendingSearchesDays'][0]['trendingSearches'])
-        ndf['date'] = datetime.datetime.strftime(i, '%Y-%m-%d')
-        df.append(ndf)
-    df = pd.concat(df, ignore_index=True)
-    df['title'] = df['title'].apply(lambda x: x['query'])#讓title只顯示中文
+    df_list = []
 
-    keywords = []
-    for index, row in df.iterrows():
-        keywords.append({"value": row['title'], "label": row['title']})
+    for i in pd.date_range(start=startdt.strftime('%Y%m%d'), end=enddt.strftime('%Y%m%d'), freq='1D'):
+        url = f'https://trends.google.com.tw/trends/api/dailytrends?hl=zh-TW&tz=-480&ed={i.strftime("%Y%m%d")}&geo=TW&ns=15'
+        try:
+            resp = requests.get(url, headers=header, timeout=6)
+            if resp.status_code == 200:
+                raw_json = re.sub(r'^\)\]\}\',\n', '', resp.text)
+                parsed = json.loads(raw_json)
+                days_data = parsed.get('default', {}).get('trendingSearchesDays', [])
+                if days_data:
+                    ndf = pd.DataFrame(days_data[0].get('trendingSearches', []))
+                    if not ndf.empty:
+                        ndf['date'] = i.strftime('%Y-%m-%d')
+                        df_list.append(ndf)
+        except Exception as e:
+            print(f"爬取 Google Trends 發生異常: {e}")
 
+    if df_list:
+        combined_df = pd.concat(df_list, ignore_index=True)
+        if 'title' in combined_df.columns:
+            combined_df['title'] = combined_df['title'].apply(lambda x: x.get('query', '') if isinstance(x, dict) else str(x))
+            keywords = [{"value": row['title'], "label": row['title']} for _, row in combined_df.iterrows() if row['title']]
+            dataTitle = list(combined_df['title'].head(40))
+            dataArticles = list(combined_df['articles'].head(40)) if 'articles' in combined_df.columns else []
+
+            _TRENDS_CACHE = {
+                "timestamp": now,
+                "keywords": keywords,
+                "dataTitle": dataTitle,
+                "dataArticles": dataArticles,
+            }
+            return keywords, dataTitle, dataArticles
+
+    return _TRENDS_CACHE["keywords"], _TRENDS_CACHE["dataTitle"], _TRENDS_CACHE["dataArticles"]
+
+@api_view(['GET'])
+def keywordList(request):
+    keywords, _, _ = _get_google_trends()
     return Response(keywords)
 
 def crawlerKeyword(request):
-    start = time.time()
+    keyword = request.query_params.get('keyword', '').strip()
+    if not keyword:
+        return []
+
+    now = time.time()
+    if keyword in _KEYWORD_WORDS_CACHE:
+        cache_item = _KEYWORD_WORDS_CACHE[keyword]
+        if now - cache_item["timestamp"] < CACHE_TTL_SECONDS:
+            return cache_item["words"]
+
+    _, dataTitle, dataArticles = _get_google_trends()
 
     header = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36"
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
     }
-    # url="https://trends.google.com.tw/trends/api/dailytrends?hl=zh-TW&tz=-480&ed=20220926&geo=TW&ns=15"
-    # resp = requests.get(url,headers=header)
-    # resp.text
 
-    # pd.DataFrame(json.loads(re.sub(r'\)\]\}\',\n', '', resp.text))['default']['trendingSearchesDays'][0]['trendingSearches'])
-
-    enddt = datetime.datetime.today()
-    startdt = enddt - datetime.timedelta(days=1)
-    df = []
-    for i in pd.date_range(start=datetime.datetime.strftime(startdt,'%Y%m%d'), end=datetime.datetime.strftime(enddt,'%Y%m%d'), freq='1D'):
-        url = 'https://trends.google.com.tw/trends/api/dailytrends?hl=zh-TW&tz=-480&ed={}&geo=TW&ns=15'.format(datetime.datetime.strftime(i, '%Y%m%d'))
-        print(url)
-        resp = requests.get(url,headers=header)
-        ndf=[]
-        ndf = pd.DataFrame(json.loads(re.sub(r'\)\]\}\',\n', '', resp.text))['default']['trendingSearchesDays'][0]['trendingSearches'])
-        ndf['date'] = datetime.datetime.strftime(i, '%Y-%m-%d')
-        df.append(ndf)
-    df = pd.concat(df, ignore_index=True)
-    df['title'] = df['title'].apply(lambda x: x['query'])
-    dataTitle = df['title'].head(40)
-    dataArticles = df['articles'].head(40)
-    print(dataTitle)
-    # content = request.form['data']
-    content = request.query_params.get('keyword')
-    
-    for i in range(40):
-        if content == dataTitle[i]:
-            dataStr = ""
-            for j in range(3):
+    dataStr = ""
+    for idx, title in enumerate(dataTitle):
+        if keyword == title and idx < len(dataArticles):
+            articles = dataArticles[idx] if isinstance(dataArticles[idx], list) else []
+            for j in range(min(3, len(articles))):
+                article_url = articles[j].get("url") if isinstance(articles[j], dict) else None
+                if not article_url:
+                    continue
                 try:
-                    url = dataArticles[i][j]["url"]
-                    data=req.Request(url,headers=header)
-                    with req.urlopen(data) as response:
-                            data=response.read().decode("utf-8")
-                    print(url)
-                    dataStr += data
-                except:
-                    print(f'無法爬取：{url}')
-                # data=req.Request(url,headers=header)
-                # with req.urlopen(data) as response:
-                #         data=response.read().decode("utf-8")
-                # dataStr += data
-            # url = dataArticles[i][0]["url"]
+                    req_obj = req.Request(article_url, headers=header)
+                    with req.urlopen(req_obj, timeout=4) as response:
+                        html_content = response.read().decode("utf-8", errors="ignore")
+                    dataStr += html_content
+                except Exception as e:
+                    print(f"無法爬取新聞內文 [{article_url}]: {e}")
             break
-    end = time.time()
-    print(format(end-start))
-    # data=req.Request(url,headers=header)
-
-    # with req.urlopen(data) as response:
-    #     data=response.read().decode("utf-8")
 
     def extract_chinese(txt):
-        pattern = re.compile("[\u4e00-\u9fa5]")
+        pattern = re.compile("[\u4e00-\u9fa5]+")
         return "".join(pattern.findall(txt))
-    
-    try:
-        crawlerList = list(jieba.cut(extract_chinese(dataStr)))
-    except:
-        dataStr = ''
-        crawlerList = list(jieba.cut(extract_chinese(dataStr)))
-        print("發生錯誤！")
 
+    try:
+        clean_chinese = extract_chinese(dataStr)
+        crawlerList = list(jieba.cut(clean_chinese)) if clean_chinese else [keyword]
+    except Exception as e:
+        print(f"斷詞失敗: {e}")
+        crawlerList = [keyword]
+
+    _KEYWORD_WORDS_CACHE[keyword] = {"words": crawlerList, "timestamp": now}
     return crawlerList
 
 @api_view(['GET'])
 def nationList(request):
     crawlerList = crawlerKeyword(request)
     foreignQueryset = ForeignKeyword.objects.values_list("Name", flat=True)
-    foreignList = list(foreignQueryset)
-    commonWords = set(crawlerList) & set(foreignList)
+    foreignList = set(foreignQueryset)
+    commonWords = set(crawlerList) & foreignList
+
     if len(commonWords) > 3:
         nations = Nation.objects.all().order_by('-Nation_ID').values()
     else:
         nations = Nation.objects.all().order_by('Nation_ID').values()
-    print(f"len(commonWords):{len(commonWords)}")
-    nationOptions = []
-    for nation in nations:
-        nationOptions.append({"value": nation["Nation_ID"], "label": nation["Name"]})
+
+    nationOptions = [{"value": nation["Nation_ID"], "label": nation["Name"]} for nation in nations]
     return Response(nationOptions)
 
 @api_view(['GET'])
 def categoryList(request):
     crawlerList = crawlerKeyword(request)
     nation_id = request.query_params.get('nation')
-    industries = Industry.objects.filter(Nation_id=nation_id)
-    # industries = Industry.objects.all()
+    industries = Industry.objects.filter(Nation_id=nation_id) if nation_id else Industry.objects.all()
+
+    crawlerSet = set(crawlerList)
     data = []
     for industry in industries:
-        industryQueryset = IndustryKeyword.objects.filter(Industry_id=industry.Industry_ID).values_list("Name", flat=True)
-        industryList = list(industryQueryset)
-        commonWords = set(crawlerList) & set(industryList)
+        industryWords = set(IndustryKeyword.objects.filter(Industry_id=industry.Industry_ID).values_list("Name", flat=True))
+        commonWords = crawlerSet & industryWords
         data.append((len(commonWords), industry.Industry_ID, industry.Name))
-    data = sorted(data,key=lambda x: x[0], reverse = True)
-    
-    categories = []
-    for i in data:
-        categories.append({"value": i[1], "label": i[2]})
-    
+
+    data.sort(key=lambda x: x[0], reverse=True)
+    categories = [{"value": item[1], "label": item[2]} for item in data]
     return Response(categories)
 
-# def lstmPredict(df):
-#     # df = yf.download(stock.Ticker, period='1y') 配合load_model使用
-#     y = df['Close'].fillna(method='ffill')
-#     y = y.values.reshape(-1, 1)
-
-#     scaler = MinMaxScaler(feature_range=(0, 1))
-#     scaler = scaler.fit(y)
-#     y = scaler.transform(y)
-
-#     n_lookback = 1
-#     n_forecast = 7
-
-#     X = []
-#     Y = []
-
-#     for i in range(n_lookback, len(y) - n_forecast + 1):
-#         X.append(y[i - n_lookback: i])
-#         Y.append(y[i: i + n_forecast])
-
-#     X = np.array(X)
-#     Y = np.array(Y)
-
-#     # model = load_model('stock_model/lstm_model.h5', compile = False)
-#     # fit the model
-#     model = Sequential()
-#     model.add(LSTM(units=50, return_sequences=True, input_shape=(n_lookback, 1)))
-#     model.add(LSTM(units=50))
-#     model.add(Dense(n_forecast))
-
-#     model.compile(loss='mean_squared_error', optimizer='adam')
-#     model.fit(X, Y, epochs=100, batch_size=32, verbose=0)
-
-#     X_ = y[- n_lookback:]
-#     X_ = X_.reshape(1, n_lookback, 1)
-
-#     Y_ = model.predict(X_).reshape(-1, 1)
-#     Y_ = scaler.inverse_transform(Y_)
-
-#     df_past = df[['Close']].reset_index()
-#     df_past.rename(columns={'index': 'Date', 'Close': 'Actual'}, inplace=True)
-#     df_past['Date'] = pd.to_datetime(df_past['Date'])
-
-#     df_future = pd.DataFrame(columns=['Date', 'Forecast'])
-#     df_future['Date'] = pd.date_range(start=df_past['Date'].iloc[-1] + pd.Timedelta(days=1), periods=n_forecast)
-#     df_future['Forecast'] = Y_.flatten()
-#     df_future['Date'] = df_future['Date'].dt.strftime('%Y/%m/%d')
-
-#     return df_future
-
 def maPredict(df):
-    # 計算移動平均值
-    # ma_period = 7  # 你可以根據需要調整這個參數
-    # df['MA'] = df['Close'].rolling(window=ma_period).mean()
-
-    # 預測未來七天的資料
     future_days = 7
-    # last_ma_value = df['MA'].iloc[-1]
-    # predicted_values = [last_ma_value] * future_days
+    if df.empty or 'Close' not in df.columns:
+        return pd.DataFrame(columns=['Date', 'Forecast'])
 
-    # 將預測值添加到DataFrame
-    future_df = pd.DataFrame(columns=['Date', 'Forecast'])
-    future_df['Date'] = pd.date_range(start=df.index[-1] + pd.Timedelta(days=1), periods=future_days, freq='D')
-    # future_df['Forecast'] = predicted_values
-    # future_df['Date'] = future_df['Date'].dt.strftime('%Y/%m/%d')
+    future_dates = pd.date_range(start=df.index[-1] + pd.Timedelta(days=1), periods=future_days, freq='D')
+    close_series = df['Close'].copy()
 
-    # 使用迭代方式產生未來七天的預測值，以前14天的平均值為基準
-    for date in future_df['Date']:
-        last_14_days_avg = df['Close'][-14:].mean()
-        # df = df.append(pd.DataFrame({'Close': last_14_days_avg}, index=[date]))
-        df = pd.concat([df, pd.DataFrame({'Close': last_14_days_avg}, index=[date])])
-    future_df['Forecast'] = df['Close'][-7:].tolist()
-    future_df['Date'] = future_df['Date'].dt.strftime('%Y/%m/%d')
+    for date in future_dates:
+        lookback = close_series[-14:] if len(close_series) >= 14 else close_series
+        last_avg = float(lookback.mean()) if not lookback.empty else 0.0
+        close_series = pd.concat([close_series, pd.Series([last_avg], index=[date])])
 
-    # 將原始數據和預測數據合併
-    # result_df = pd.concat([df, future_df])
-    
+    future_df = pd.DataFrame({
+        'Date': future_dates.strftime('%Y/%m/%d'),
+        'Forecast': close_series[-future_days:].tolist()
+    })
     return future_df
 
 @api_view(['GET'])
 def stockChart(request):
-    time = request.query_params.get('time')
-    predict = request.query_params.get('predict')
-    if time is not None:
-        trackDay = datetime.datetime.strptime(time, '%Y/%m/%d')
-        startDay = trackDay - datetime.timedelta(days=14)
-        delta = datetime.datetime.today() - startDay
-    # categories = request.query_params.get('categories[]')
-    # categories = list(map(int, categories.split("|")))
+    time_param = request.query_params.get('time')
+    predict = request.query_params.get('predict') == "true"
     category = request.query_params.get('category')
 
-    data = []
-    # for category in categories:
+    if not category:
+        return Response([], status=status.HTTP_200_OK)
+
     stocks = Stock.objects.filter(Industry_id=category)
+    data = []
+
+    period_str = "14d"
+    if time_param:
+        try:
+            trackDay = datetime.datetime.strptime(time_param, '%Y/%m/%d')
+            startDay = trackDay - datetime.timedelta(days=14)
+            delta_days = max((datetime.datetime.today() - startDay).days, 14)
+            period_str = f"{delta_days}d"
+        except ValueError:
+            period_str = "14d"
+
     for stock in stocks:
-        if time is None:
-            df = yf.download(stock.Ticker, period="14d", interval="1d")
+        try:
+            df = yf.download(stock.Ticker, period=period_str, interval="1d", progress=False)
+            if df.empty:
+                continue
+
+            # 處理 yfinance 可能返回 MultiIndex 欄位的情況
+            if isinstance(df.columns, pd.MultiIndex):
+                df = df.xs(stock.Ticker, level=1, axis=1) if stock.Ticker in df.columns.levels[1] else df.droplevel(1, axis=1)
+
             dfNew = df.reset_index()
+            if 'Date' not in dfNew.columns or 'Close' not in dfNew.columns:
+                continue
+
             date = dfNew['Date'].dt.strftime('%Y/%m/%d')
             close = dfNew['Close']
 
-            if predict == "true":
-                # df_future = lstmPredict(df)
+            if predict:
                 df_future = maPredict(df)
-                close = pd.concat([close, df_future['Forecast']], ignore_index=True)
-                date = pd.concat([date, df_future['Date']], ignore_index=True)
-            data.append({"name": stock.Name, "date": date, "close": close})
-        elif time is not None:
-            df = yf.download(stock.Ticker, period=f"{delta.days}d", interval="1d")
-            dfNew = df.reset_index()
-            date = dfNew['Date'].dt.strftime('%Y/%m/%d')
-            close = dfNew['Close']
+                if not df_future.empty:
+                    close = pd.concat([close, df_future['Forecast']], ignore_index=True)
+                    date = pd.concat([date, df_future['Date']], ignore_index=True)
 
-            if predict == "true":
-                # df_future = lstmPredict(df)
-                df_future = maPredict(df)
-                close = pd.concat([close, df_future['Forecast']], ignore_index=True)
-                date = pd.concat([date, df_future['Date']], ignore_index=True)
-            data.append({"name": stock.Name, "date": date, "close": close})
+            data.append({
+                "name": stock.Name,
+                "date": date.tolist(),
+                "close": [round(float(c), 2) for c in close.dropna()]
+            })
+        except Exception as e:
+            print(f"獲取個股數據失敗 [{stock.Ticker}]: {e}")
+
     return Response(data)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def trackList(request):
-    user = request.user
-    tracks = user.track_set.all().order_by('-Track_ID')
-    # tracks = Track.objects.all()
+    tracks = request.user.track_set.all().order_by('-Track_ID')
     serializer = TrackSerializer(tracks, many=True)
     return Response(serializer.data)
 
@@ -335,89 +288,92 @@ def timeList(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def trackDetail(request, pk):
-    tracks = Track.objects.get(Track_ID=pk)
-    serializer = TrackSerializer(tracks, many=False)
+    # 安全性修復：只能查看屬於該登入用戶的追蹤資訊
+    track = get_object_or_404(Track, Track_ID=pk, User=request.user)
+    serializer = TrackSerializer(track, many=False)
     return Response(serializer.data)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def trackCreate(request):
-    data = request.data
+    data = request.data.copy()
     data["User"] = request.user.id
 
+    industry_ids = data.get("Industries", [])
+    if not industry_ids:
+        return Response({'error': '請至少選擇一個產業類別'}, status=status.HTTP_400_BAD_REQUEST)
+
     industryList = []
-    for i in data["Industries"]:
-        industry = Industry.objects.get(Industry_ID=i)
-        industryList.append({"Industry_ID": industry.Industry_ID, "Name": industry.Name})
+    for i in industry_ids:
+        try:
+            industry = Industry.objects.get(Industry_ID=i)
+            industryList.append({"Industry_ID": industry.Industry_ID, "Name": industry.Name})
+        except Industry.DoesNotExist:
+            continue
+
+    if not industryList:
+        return Response({'error': '所選產業不存在'}, status=status.HTTP_400_BAD_REQUEST)
+
     data["Industries"] = industryList
 
+    # 取得最新交易日作為追蹤點
+    trackDate = datetime.datetime.today().strftime('%Y/%m/%d')
     stock = Stock.objects.filter(Industry_id=industryList[0]["Industry_ID"]).first()
-    df = yf.download(stock.Ticker, period="1d")
-    df = df.reset_index()
-    df['Date'] = df['Date'].dt.strftime('%Y/%m/%d')
-    trackDate = df.at[0, "Date"]
+    if stock:
+        try:
+            df = yf.download(stock.Ticker, period="5d", progress=False)
+            if not df.empty:
+                df = df.reset_index()
+                trackDate = df['Date'].iloc[-1].strftime('%Y/%m/%d')
+        except Exception as e:
+            print(f"取得標的最新日期失敗: {e}")
 
-    try:
-        # time = Time.objects.filter(Date=trackDate).latest('Date')
-        # print(time)
-        time = Time.objects.get(Date=trackDate)
-        data['Times']=[{"Time_ID": time.Time_ID, "Date": time.Date}]
-    except:
-        serializer = TimeSerializer(data={"Date": trackDate})
-        if serializer.is_valid():
-            serializer.save()
-
-        time = Time.objects.get(Date=trackDate)
-        data['Times']=[{"Time_ID": time.Time_ID, "Date": time.Date}]
+    time_obj, _ = Time.objects.get_or_create(Date=trackDate)
+    data['Times'] = [{"Time_ID": time_obj.Time_ID, "Date": time_obj.Date}]
 
     serializer = TrackSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def trackTimeCreate(request, pk):
-    # tracks = Track.objects.get(Track_ID=pk)
-    # serializer = TrackSerializer(tracks, many=False)
+    # 安全性修復：只能打卡屬於自己的追蹤項目
+    track = get_object_or_404(Track, Track_ID=pk, User=request.user)
+    industry = track.Industries.first()
 
-    tracks = Track.objects.get(Track_ID=pk)
-    industry_id = tracks.Industries.first().Industry_ID
-    stock = Stock.objects.filter(Industry_id=industry_id).first()
-    df = yf.download(stock.Ticker, period="1d")
-    df = df.reset_index()
-    df['Date'] = df['Date'].dt.strftime('%Y/%m/%d')
-    trackDate = df.at[0, "Date"]
+    trackDate = datetime.datetime.today().strftime('%Y/%m/%d')
+    if industry:
+        stock = Stock.objects.filter(Industry_id=industry.Industry_ID).first()
+        if stock:
+            try:
+                df = yf.download(stock.Ticker, period="5d", progress=False)
+                if not df.empty:
+                    df = df.reset_index()
+                    trackDate = df['Date'].iloc[-1].strftime('%Y/%m/%d')
+            except Exception as e:
+                print(f"取得最新日期失敗: {e}")
 
-    try:
-        time = Time.objects.get(Date=trackDate)
-    except:
-        serializer = TimeSerializer(data={"Date": trackDate})
-        if serializer.is_valid():
-            serializer.save()
-        
-        time = Time.objects.get(Date=trackDate)
+    time_obj, _ = Time.objects.get_or_create(Date=trackDate)
 
-    try:
-        tracks.Times.get(Date=trackDate)
-        serializer = TrackSerializer(tracks, many=False)
-        serializer_data = serializer.data
-        additional_data = {'Message': '您今日已進行追蹤！'}
-        serializer_data.update(additional_data)
-    except:
-        tracks.Times.add(time)
-        serializer = TrackSerializer(tracks, many=False)
-        serializer_data = serializer.data
-        additional_data = {'Message': '追蹤成功！'}
-        serializer_data.update(additional_data)
-    
-    return Response(serializer_data)
+    if track.Times.filter(Date=trackDate).exists():
+        msg = '您今日已進行追蹤！'
+    else:
+        track.Times.add(time_obj)
+        msg = '追蹤成功！'
+
+    serializer = TrackSerializer(track, many=False)
+    serializer_data = serializer.data
+    serializer_data['Message'] = msg
+    return Response(serializer_data, status=status.HTTP_200_OK)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def trackDelete(request, pk):
-    track = Track.objects.get(Track_ID=pk)
+    # 安全性修復：只能刪除屬於自己的追蹤項目
+    track = get_object_or_404(Track, Track_ID=pk, User=request.user)
     track.delete()
-
-    return Response('刪除成功')
+    return Response({'Message': '刪除成功'}, status=status.HTTP_200_OK)

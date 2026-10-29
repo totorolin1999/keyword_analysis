@@ -68,7 +68,7 @@ REST_FRAMEWORK = {
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=3),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_ACCESS_LIFETIME_MINUTES', '60'))),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -150,21 +150,38 @@ WSGI_APPLICATION = 'keyword_analysis_drf.wsgi.application'
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
 if DEVELOPMENT_MODE is True:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': env('PostgreSQL_NAME'),
-            'USER': env('PostgreSQL_USER'),
-            'PASSWORD': env('PostgreSQL_PASSWORD'),
-            'HOST': env('PostgreSQL_HOST'),
-            'PORT': env('PostgreSQL_PORT'),
+    if os.getenv('PostgreSQL_NAME'):
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': env('PostgreSQL_NAME'),
+                'USER': env('PostgreSQL_USER'),
+                'PASSWORD': env('PostgreSQL_PASSWORD'),
+                'HOST': env('PostgreSQL_HOST'),
+                'PORT': env('PostgreSQL_PORT'),
+            }
         }
-    }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 else:
     # Render PostgreSQL (Live)
-    DATABASES = {
-        "default": dj_database_url.parse(env('DATABASE_URL'))
-    }
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        DATABASES = {
+            "default": dj_database_url.parse(database_url)
+        }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 
 # Password validation
@@ -208,7 +225,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'keyword_analysis_reactapp/build/static')
 ]
 
-MEDIA_URL = '/meida/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 
 # Default primary key field type

@@ -45,7 +45,7 @@ class Stock(models.Model):
     
 class Time(models.Model):
     Time_ID = models.AutoField(primary_key=True)
-    Date = models.CharField(max_length=15)
+    Date = models.CharField(max_length=15, unique=True)
 
     def __str__(self):
         return self.Date
@@ -54,8 +54,8 @@ class Track(models.Model):
     Track_ID = models.AutoField(primary_key=True)
     Keyword = models.CharField(max_length=255)
     User = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    Industries = models.ManyToManyField(Industry, blank=True, null=True)
-    Times = models.ManyToManyField(Time, blank=True, null=True)
+    Industries = models.ManyToManyField(Industry, blank=True)
+    Times = models.ManyToManyField(Time, blank=True)
 
     def __str__(self):
         return self.Keyword
